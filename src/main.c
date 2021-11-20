@@ -1,4 +1,4 @@
-/* HAWK
+/* HAWK 
  * ====
  *
  * Some 3D graphics because I am bored in programming class
@@ -17,26 +17,18 @@
  * int itemCount = 5;
  * char* items[itemCount]; 
  *
- * This somehow works, but should not!
+ * This somehow works, but this is not c99!
  * What I'm trying to say is DON'T WRITE THIS CODE!!!
- * It uses somthing akin to alloca() to do this, which could 
+ * It uses something akin to alloca() to do this, which could 
  * lead to unstable code.
  */
 
-#include <GL/glew.h> // Has to be included first
-
-#include <SDL2/SDL.h> 
-#include <SDL2/SDL_opengl.h>
-
-#include <GL/gl.h>
-//#include <GL/glut.h> // Might be good for later
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include "include/libs.h"
+#include "include/shader.h"
 
 bool init();
 void kill();
+uint32_t createProgramVF(const char* vertexSourcePath, const char* fragmentSourcePath); // Vertex and Fragment shader
 
 // Pointer to our window
 const uint32_t windowWidth = 640;
@@ -63,7 +55,9 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "Could not create context: %s\n", SDL_GetError());
 	}
 
-	glewInit(); // initialize glew
+	if (glewInit() != GLEW_OK) {
+		fprintf(stderr, "Could not init GLEW: \n");
+	}
 
 	// OpenGL Vertecies
 	// ----------------
@@ -73,9 +67,9 @@ int main(int argc, char* argv[]) {
 	glBindVertexArray(vertexArrayID);
 
 	static const float vertexBufferData[9] = {
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		0.0f,  1.0f, 0.0f,
+		-0.8f, -0.8f, -0.8f,
+		0.8f, -0.8f, -0.8f,
+		0.0f,  0.8f, -0.8f,
 	};
 
 	uint32_t vertexBufferID;
@@ -83,6 +77,14 @@ int main(int argc, char* argv[]) {
 	glGenBuffers(1, &vertexBufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
+
+	// Shaders!
+	// --------
+	
+	uint32_t basicShader;
+	const char* vertexShaderPath = "./res/shaders/basic_vert.glsl";
+	const char* fragmentShaderPath = "./res/shaders/basic_frag.glsl";
+	basicShader = createProgramVF(vertexShaderPath, fragmentShaderPath);
 
 	// DRAW & PROCESS
 	// ==============
@@ -96,8 +98,8 @@ int main(int argc, char* argv[]) {
 				running = false;
 			}
 			if (event.type == SDL_KEYDOWN) {
-				switch (event.key.keysym.sym) {
-					case SDLK_q:
+				switch (event.key.keysym.sym) { // Run through all the keys
+					case SDLK_ESCAPE:
 						running = false;
 						break;
 					default:
@@ -105,10 +107,18 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
-
+		
+		// Clear the Viewport
+		// ==================
+		
 		glViewport(0, 0, windowWidth, windowHeight);
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		// Draw the Triangles
+		// ==================
+		//
+		// TODO: Make this readable, or abstract it out
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
@@ -117,12 +127,19 @@ int main(int argc, char* argv[]) {
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			0,
+			3*sizeof(float),
 			(void*)0
 		);
+
+		glUseProgram(basicShader);
+
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		glUseProgram(0);
 		glDisableVertexAttribArray(0);
 
+		// Show it on the Window
+		// =====================
 
 		SDL_GL_SwapWindow(window);
 	}
@@ -133,7 +150,6 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
-
 bool init() {
 	/* Initializes SDL and saves the window to it's global variable */
 
@@ -142,7 +158,7 @@ bool init() {
 		return false;
 	}
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -169,3 +185,5 @@ void kill() {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 }
+
+// Thanks for reading
