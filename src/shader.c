@@ -84,6 +84,7 @@ uint32_t createProgramVF(const char* vertexSourcePath, const char* fragmentSourc
 	glGetProgramiv(programVF, GL_LINK_STATUS, &success);
 	if(!success) {
 		fprintf(stderr, "Could not link program\n");
+		glGetProgramInfoLog(programVF, 512, NULL, infolog);
 	}
 
 	return programVF;

@@ -1,0 +1,12 @@
+# diamond.obj
+g Diamond
+
+# All 6 verticies
+v -0.8 0.8 0.0
+v -0.8 -0.8 0.0
+v 0.8 0.8 0.0
+v 0.8 -0.8 0.0
+
+# 9 faces
+f 1 2 3
+f 2 3 4

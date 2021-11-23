@@ -4,9 +4,8 @@
  * Some 3D graphics because I am bored in programming class
  * Python programming in uni is not fun ;-)
  *
- * Vulkan didn't work on a thinkpad x220 (who could've guessed)
- * But I'll write OpenGL to make up for it!
- *
+ * I like the idea of rendering to a framebuffer and then 
+ * using it as a texture so I can do some funky pixels
  *
  * A Quick Note on GCC
  * -------------------
@@ -21,19 +20,30 @@
  * What I'm trying to say is DON'T WRITE THIS CODE!!!
  * It uses something akin to alloca() to do this, which could 
  * lead to unstable code.
+ *
+ * TODO
+ * ----
+ *
+ * OBJ parser
+ *   + Should be able to make vertex and index buffer
+ *
+ * Actually make 3D:
+ *   + Send in the matricies
+ *   + Get a better way to specify vertex attribs
+ *
+ * Make Uniform handling easier
+ *   + uniform4f(basicShader, "playerColor", 1.0f, 1.0f, 1.0f, 1.0f);
  */
 
 #include "include/libs.h"
 #include "include/shader.h"
+#include "include/object.h"
 
 bool init();
 void kill();
-uint32_t createProgramVF(const char* vertexSourcePath, const char* fragmentSourcePath); // Vertex and Fragment shader
 
-// Pointer to our window
 const uint32_t windowWidth = 640;
-const uint32_t windowHeight = 480;
-SDL_Window* window = NULL;
+const uint32_t windowHeight = 480; SDL_Window* window = NULL;
 
 int main(int argc, char* argv[]) {
 
@@ -62,21 +72,10 @@ int main(int argc, char* argv[]) {
 	// OpenGL Vertecies
 	// ----------------
 	
+	// Needed for opengl to work
 	uint32_t vertexArrayID;
 	glGenVertexArrays(1, &vertexArrayID);
 	glBindVertexArray(vertexArrayID);
-
-	static const float vertexBufferData[9] = {
-		-0.8f, -0.8f, -0.8f,
-		0.8f, -0.8f, -0.8f,
-		0.0f,  0.8f, -0.8f,
-	};
-
-	uint32_t vertexBufferID;
-
-	glGenBuffers(1, &vertexBufferID);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
 
 	// Shaders!
 	// --------
@@ -86,12 +85,26 @@ int main(int argc, char* argv[]) {
 	const char* fragmentShaderPath = "./res/shaders/basic_frag.glsl";
 	basicShader = createProgramVF(vertexShaderPath, fragmentShaderPath);
 
-	// DRAW & PROCESS
-	// ==============
+	uint32_t uPlayerColor;
+	uPlayerColor = glGetUniformLocation(basicShader, "playerColor");
+
+	glUseProgram(basicShader);
+	glUniform4f(uPlayerColor, 1.0f, 0.2f, 1.0f, 0.0f);
+	glUseProgram(0);
+
+	// Objects
+	// -------
+	
+	Object square = readObject("./res/square.obj");
+
+	// Process
+	// =======
 	
 	bool running = true;
+	float playerColor = 0.0f;
 	
 	while (running) {
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
@@ -107,6 +120,28 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
+
+		// This is a much better way to get the keystates in a game-like way
+		const char* keyboardState = SDL_GetKeyboardState(NULL); 
+
+		// Some color for a change 
+		if (keyboardState[SDL_SCANCODE_W]) {
+			playerColor += 0.004f;
+		}
+		if (keyboardState[SDL_SCANCODE_S]) {
+			playerColor -= 0.004f;
+
+		}
+		if (playerColor < 0.0f)
+			playerColor = 0.0f;
+		else if (playerColor > 1.0f)
+			playerColor = 1.0f;
+				
+		
+		// Make uniform assigning easier
+		glUseProgram(basicShader);
+		glUniform4f(uPlayerColor, playerColor, playerColor, playerColor, 0.0f);
+		glUseProgram(0);
 		
 		// Clear the Viewport
 		// ==================
@@ -120,29 +155,15 @@ int main(int argc, char* argv[]) {
 		//
 		// TODO: Make this readable, or abstract it out
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-		glVertexAttribPointer(
-			0,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			3*sizeof(float),
-			(void*)0
-		);
-
-		glUseProgram(basicShader);
-
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		glUseProgram(0);
-		glDisableVertexAttribArray(0);
+		drawObject(basicShader, square);
 
 		// Show it on the Window
 		// =====================
 
 		SDL_GL_SwapWindow(window);
 	}
+
+	freeObject(square);
 
 	// KILL
 	// ====
