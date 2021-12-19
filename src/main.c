@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 	// Objects
 	// -------
 	uint32_t beforeTime = SDL_GetTicks(); // Timer fun
-	object3D square = readObject("./res/pumpkin.obj");
+	object3D square = readObject("./res/monkey.obj");
 	printf("Object load time: %u ms\n",SDL_GetTicks() - beforeTime);
 
 	// CGLM
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
 	);
 
 	// model
-	glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
+	glm_scale(model, (vec3){20.0f, 20.0f, 20.0f});
 
 	uniformMatrix4fv(basicShader, "model", model);
 	uniformMatrix4fv(basicShader, "view", view);
