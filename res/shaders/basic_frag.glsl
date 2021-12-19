@@ -1,8 +1,36 @@
 #version 130
-out vec4 FragColor;
+out vec4 fragColor;
 
-in vec4 vertexColor;
+in vec4 vertColor;
+in vec3 vertNormal;
+in vec3 vertPos;
 
 void main() {
-	FragColor = vertexColor;
+	// Constants
+	float ambientStrength = 0.1f;
+
+	vec3 ambientColor =	vec3(1.0f,  1.0f, 1.0f);
+	vec3 objectColor =	vec3(0.8f,  0.0f, 1.0f);
+	vec3 lightPos =		vec3(30.0f, 0.0f, 40.0f);
+	vec3 lightColor =	vec3(1.0f,  1.0f, 1.0f);
+
+	// Diffuse
+	// ======= 
+	// Calculate normals
+	vec3 norm = normalize(vertNormal);
+	vec3 lightDir = normalize(lightPos - vertPos);
+
+	// Calculate diffuse
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * lightColor;
+
+	// Ambient
+	// =======
+
+	vec3 ambient = ambientStrength * ambientColor;
+
+	// Combine them
+	// ============
+	vec3 result = (diffuse + ambient) * objectColor;
+	fragColor = vec4(result, 1.0f);
 }

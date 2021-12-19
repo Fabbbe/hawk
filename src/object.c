@@ -1,126 +1,126 @@
 #include "include/object.h"
 
-Object readObject(const char* objFilePath) {
-	/* Reads the object and returns the indices and verices */
-	Object obj;
-	FILE* fp;
+#define FAST_OBJ_IMPLEMENTATION 
+#include "include/fast_obj.h" 
 
-	int vertCount = 0;
-	int indCount = 0;
+object3D readObject(const char* objFilePath) {
+	/* Reads an object using fast_obj.h and returns the shit
+	 *
+	 * TODO:
+	 *
+	 */
+	object3D obj;
+	fastObjMesh* mesh; 
 
-	fp = fopen(objFilePath, "r");
-	int c;
-	
-	// Count verticies and indicies
-	while ((c = fgetc(fp)) != EOF) { 
-		if (c == '\n') {
-			c = fgetc(fp); // if newline get next char
-			switch (c) {
-				case 'v':
-					++vertCount;
-					break;
-				case 'f':
-					++indCount;
-					break;
-			}
-		}
-	}
-	obj.vertCount = vertCount;
-	obj.indCount = indCount;
-	//printf("vertCount: %u\n", obj.vertCount);
-	
-	fseek(fp, 0, SEEK_SET);  // Roll back to beginning
 
-	obj.vertices = calloc(obj.vertCount * 3, sizeof(float));
-	obj.indices = calloc(obj.indCount * 3, sizeof(int));
-	
-	// Now we read the values into the buffers
-	uint32_t vertIndex = 0;
-	uint32_t indIndex = 0;
-	while ((c = fgetc(fp)) != EOF) { 
-		if (c == '\n') {
-			c = fgetc(fp); // if newline get next char
-			switch (c) {
-				case 'v':
-					fscanf(fp, " %f %f %f", 
-							((float*)&obj.vertices[vertIndex]), 
-							((float*)&obj.vertices[vertIndex + 1]), 
-							((float*)&obj.vertices[vertIndex + 2])
-					);
-					vertIndex += 3;
-					break;
-				case 'f':
-					fscanf(fp, " %u %u %u", 
-							(uint32_t*)&obj.indices[indIndex],
-							(uint32_t*)&obj.indices[indIndex + 1],
-							(uint32_t*)&obj.indices[indIndex + 2]
-					);
-					indIndex += 3;
-					break;
-			}
-		}
-	}
-	// Decrease all indices by 1
-	
-	for (int i = 0; i < obj.indCount * 3; ++i) {
-		obj.indices[i] = obj.indices[i] - 1;
-	}
-	/* DEBUG PRINTS
-	for (int i = 0; i < obj.indCount * 3; ++i) {
-		printf(" %u", obj.indices[i]);
-	}
-	printf("\n");
-	for (int i = 0; i < obj.vertCount * 3; ++i) {
-		printf(" %f", obj.vertices[i]);
-	}
-	printf("\n");
-	*/
+	// VAO Shit is here now??
+	glGenVertexArrays(1, &obj.VAO);
+	glBindVertexArray(obj.VAO);
 
+	// Read the mesh
+	mesh = fast_obj_read(objFilePath);
+
+	obj.vertexCount = mesh->face_count*3; // Amount of vertices after being read
+	obj.vertices = (struct vertex*)malloc(sizeof(struct vertex)*(obj.vertexCount));
+	
 	// Copy object into OpenGL
 	
+	// Vertices
+	// --------
+	
+	// Should copy 1:1 the verticies to correct indices
+	for (int i = 0; i < obj.vertexCount; ++i) {
+		// Copy vertices:
+		obj.vertices[i].v0 = mesh->positions[mesh->indices[i].p*3];
+		obj.vertices[i].v1 = mesh->positions[mesh->indices[i].p*3+1];
+		obj.vertices[i].v2 = mesh->positions[mesh->indices[i].p*3+2]; 
+
+		// Copy normals:
+		obj.vertices[i].n0 = mesh->normals[mesh->indices[i].n*3];
+		obj.vertices[i].n1 = mesh->normals[mesh->indices[i].n*3+1];
+		obj.vertices[i].n2 = mesh->normals[mesh->indices[i].n*3+2]; 
+
+		// Copy texture coordinates:
+		obj.vertices[i].t0 = mesh->texcoords[mesh->indices[i].t*2];
+		obj.vertices[i].t1 = mesh->texcoords[mesh->indices[i].t*2+1];
+	}
+
 	glGenBuffers(1, &obj.VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, obj.VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * obj.vertCount * 3, obj.vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(struct vertex) * obj.vertexCount, (float*) obj.vertices, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &obj.IBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj.IBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * obj.indCount * 3, obj.indices, GL_STATIC_DRAW);
-
-	fclose(fp);
+	// Normals
+	// -------
+	
+	fast_obj_destroy(mesh);
 	return obj;
 }
 
-void freeObject(Object obj) {
+void freeObject(object3D obj) {
+	// You could free right after handing over to the GPU
 	free(obj.vertices);
-	free(obj.indices);
 }
 
-void drawObject(uint32_t program, Object obj) {
-	/*
+void drawObject(uint32_t program, object3D obj) {
+	/* Draws an object: 
+	 * 
+	 * TODO:
+	 *
+	 * Handle the glGetAttribLocation calls in shader.c:
+	 *   + Get a shader 
 	 */
+
+	unsigned int vertexPos = glGetAttribLocation(program, "aPos");
+	unsigned int normalPos = glGetAttribLocation(program, "aNormal");
+	unsigned int texPos = glGetAttribLocation(program, "aTex");
+
 	glUseProgram(program);
 
 	// VBO SHIT
-	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, obj.VBO);
+
 	glVertexAttribPointer(
-		0,
+		vertexPos,
 		3,
 		GL_FLOAT,
 		GL_FALSE,
-		3*sizeof(float),
+		sizeof(struct vertex),
 		(void*)0
 	);
+	glEnableVertexAttribArray(vertexPos); 
+
+	glVertexAttribPointer(
+		normalPos,
+		3,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(struct vertex),
+		(void*)(sizeof(float)*3)
+	);
+	glEnableVertexAttribArray(normalPos); 
+
+	glVertexAttribPointer(
+		texPos,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		sizeof(struct vertex),
+		(void*)(sizeof(float)*6)
+	);
+	glEnableVertexAttribArray(texPos); 
+
 
 	// IBO & DRAW
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj.IBO);
-	glDrawElements(
-			GL_TRIANGLES,
-			obj.indCount*3,
-			GL_UNSIGNED_INT,
-			(void*)0
+
+	glDrawArrays(
+		GL_TRIANGLES,
+		0,
+		obj.vertexCount
 	);
 
 	glUseProgram(0);
-	glDisableVertexAttribArray(0);
+
+	glDisableVertexAttribArray(vertexPos); 
+	glDisableVertexAttribArray(normalPos); 
+	glDisableVertexAttribArray(texPos); 
 }

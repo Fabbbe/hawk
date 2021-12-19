@@ -89,3 +89,10 @@ uint32_t createProgramVF(const char* vertexSourcePath, const char* fragmentSourc
 
 	return programVF;
 }
+
+void uniformMatrix4fv(uint32_t program, const char* uniformName, mat4 value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniformMatrix4fv(location, 1, GL_FALSE, (float*)value);
+	glUseProgram(0);
+}

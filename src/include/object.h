@@ -3,20 +3,36 @@
 
 #include "include/libs.h"
 
+// The base vertex
+struct vertex {
+	
+	// Vertices:
+	float v0;
+	float v1;
+	float v2;
+
+	// Normals:
+	float n0;
+	float n1;
+	float n2;
+
+	float t0;
+	float t1;
+};
+
 // All files should be read in as this
 typedef struct {
-	uint32_t vertCount;
-	uint32_t indCount;
 	uint32_t VBO; // ID for verteces
 	uint32_t IBO; // ID for indices
-	float* vertices;
-	uint32_t* indices; 
-} Object;
+	uint32_t VAO;
+	unsigned int vertexCount;
+	struct vertex* vertices;
+} object3D;
 
-Object readObject(const char* objFilePath);
+object3D readObject(const char* objFilePath);
 
-void freeObject(Object obj);
+void freeObject(object3D obj);
 
-void drawObject(uint32_t program, Object obj);
+void drawObject(uint32_t program, object3D obj);
 
 #endif

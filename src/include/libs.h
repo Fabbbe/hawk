@@ -12,8 +12,11 @@
 #include <GL/gl.h>
 //#include <GL/glut.h> // Might be good for later
 
+#include <cglm/cglm.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 
 #endif
