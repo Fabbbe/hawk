@@ -25,10 +25,8 @@
  * ----
  *
  * Textures:
- *   + Load the textures
- *   + Send them to OpenGL
- *   + And then create a better way to do it in shader.c which is called by 
- *     object.c at object creation
+ *   + 
+ *   + Where should these textures be handled?
  *
  * Make 3D Great Again:
  *   + Get a better way to specify vertex attribs (handled in drawObject atm)
@@ -38,6 +36,7 @@
 #include "include/libs.h"
 #include "include/shader.h"
 #include "include/object.h"
+
 
 bool init();
 void kill();
@@ -93,9 +92,9 @@ int main(int argc, char* argv[]) {
 
 	// Objects
 	// -------
-	uint32_t beforeTime = SDL_GetTicks(); // Timer fun
-	object3D square = readObject("./res/monkey.obj");
-	printf("Object load time: %u ms\n",SDL_GetTicks() - beforeTime);
+	//uint32_t beforeTime = SDL_GetTicks(); // Timer fun
+	object3D* square = readObject("./res/cabinet.obj");
+	//printf("Object load time: %u ms\n",SDL_GetTicks() - beforeTime);
 
 	// CGLM
 	// ----
@@ -103,7 +102,7 @@ int main(int argc, char* argv[]) {
 	mat4 view = GLM_MAT4_IDENTITY_INIT;
 	mat4 projection = GLM_MAT4_IDENTITY_INIT;
 
-	vec3 cameraPos = {0.0f, 0.0f, -100.0f};
+	vec3 cameraPos = {0.0f, 0.0f, -10.0f};
 	vec3 cameraUp = {0.0f, 1.0f, 0.0f};
 	vec3 cameraDir = {0.0f, 0.0f, 0.0f};
 
@@ -128,7 +127,7 @@ int main(int argc, char* argv[]) {
 	);
 
 	// model
-	glm_scale(model, (vec3){20.0f, 20.0f, 20.0f});
+	glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
 
 	uniformMatrix4fv(basicShader, "model", model);
 	uniformMatrix4fv(basicShader, "view", view);
@@ -139,7 +138,7 @@ int main(int argc, char* argv[]) {
 	
 
 	bool wireframe = false;
-	float moveSpeed = 0.6f;
+	float moveSpeed = 0.06f;
 	
 	bool running = true;
 	while (running) {
@@ -232,6 +231,8 @@ int main(int argc, char* argv[]) {
 		);
 		uniformMatrix4fv(basicShader, "view", view);
 		
+		glm_rotate_y(model, 0.01f, model);
+		uniformMatrix4fv(basicShader, "model", model);
 		// Clear the Viewport
 		// ==================
 		glViewport(0, 0, windowWidth, windowHeight);

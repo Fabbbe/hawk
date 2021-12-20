@@ -3,6 +3,7 @@
 
 #include "include/libs.h"
 
+#define PATH_LENGTH 256
 // The base vertex
 struct vertex {
 	
@@ -23,16 +24,20 @@ struct vertex {
 // All files should be read in as this
 typedef struct {
 	uint32_t VBO; // ID for verteces
-	uint32_t IBO; // ID for indices
 	uint32_t VAO;
 	unsigned int vertexCount;
 	struct vertex* vertices;
+
+	// Textures
+	uint32_t texID;
+	char texPath[PATH_LENGTH];
+	
 } object3D;
 
-object3D readObject(const char* objFilePath);
+object3D* readObject(const char* objFilePath);
 
-void freeObject(object3D obj);
+void freeObject(object3D* obj);
 
-void drawObject(uint32_t program, object3D obj);
+void drawObject(uint32_t program, object3D* obj);
 
 #endif

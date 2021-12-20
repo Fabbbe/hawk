@@ -3,51 +3,107 @@
 #define FAST_OBJ_IMPLEMENTATION 
 #include "include/fast_obj.h" 
 
-object3D readObject(const char* objFilePath) {
-	/* Reads an object using fast_obj.h and returns the shit
+#define STB_IMAGE_IMPLEMENTATION
+#include "include/stb_image.h"
+
+object3D* readObject(const char* objFilePath) {
+	/* Reads an object using fast_obj->h and returns the shit
 	 *
 	 * TODO:
 	 *
+	 * Error out when file does not exist:
+	 *   + access() function in unistd.h
+	 * 
+	 *
 	 */
-	object3D obj;
+	object3D* obj = (object3D*)malloc(sizeof(object3D));
 	fastObjMesh* mesh; 
 
+	obj->vertices = NULL;
 
-	// VAO Shit is here now??
-	glGenVertexArrays(1, &obj.VAO);
-	glBindVertexArray(obj.VAO);
+	// VAO Shit 
+	glGenVertexArrays(1, &obj->VAO);
+	glBindVertexArray(obj->VAO);
 
 	// Read the mesh
 	mesh = fast_obj_read(objFilePath);
+	if (mesh == NULL) {
+		fprintf(stderr, "Could not load object '%s'\n", objFilePath);
+		return obj;
+	}
 
-	obj.vertexCount = mesh->face_count*3; // Amount of vertices after being read
-	obj.vertices = (struct vertex*)malloc(sizeof(struct vertex)*(obj.vertexCount));
+
+	obj->vertexCount = mesh->face_count*3; // Amount of vertices after being read
+	obj->vertices = (struct vertex*)malloc(sizeof(struct vertex)*(obj->vertexCount));
+
+	// Texture
+	// -------
+
+	memset(obj->texPath, '\0', sizeof(obj->texPath));
 	
-	// Copy object into OpenGL
+	if (mesh->materials != NULL) {
+		strcpy(obj->texPath, mesh->materials[0].map_Kd.path); 
+	}
+	else {
+		strcpy(obj->texPath, "./res/error.png\0");
+	}
+	//printf("Texture Path: %s\n", obj->texPath);
 	
+	glGenTextures(1, &obj->texID);  
+	glBindTexture(GL_TEXTURE_2D, obj->texID);  
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	stbi_set_flip_vertically_on_load(true); // For OpenGL compatability
+	int texWidth, texHeight, nrChannels;
+	unsigned char *data = stbi_load(obj->texPath, &texWidth, &texHeight, &nrChannels, 0); 
+	if (data == NULL) { // Define so that all imported textures have RGB
+		fprintf(stderr, "Could not open '%s'\n", obj->texPath);
+		strcpy(obj->texPath, "./res/error.png\0");
+		data = stbi_load(obj->texPath, &texWidth, &texHeight, &nrChannels, 0); 
+	}
+	glTexImage2D(GL_TEXTURE_2D, 
+			0, GL_RGB, 
+			texWidth, texHeight, 
+			0, GL_RGB, 
+			GL_UNSIGNED_BYTE, 
+			data
+	);
+
+	stbi_image_free(data);
+
+	// Copy object into OpenGL:
 	// Vertices
 	// --------
 	
 	// Should copy 1:1 the verticies to correct indices
-	for (int i = 0; i < obj.vertexCount; ++i) {
+	for (int i = 0; i < obj->vertexCount; ++i) {
 		// Copy vertices:
-		obj.vertices[i].v0 = mesh->positions[mesh->indices[i].p*3];
-		obj.vertices[i].v1 = mesh->positions[mesh->indices[i].p*3+1];
-		obj.vertices[i].v2 = mesh->positions[mesh->indices[i].p*3+2]; 
+		obj->vertices[i].v0 = mesh->positions[mesh->indices[i].p*3];
+		obj->vertices[i].v1 = mesh->positions[mesh->indices[i].p*3+1];
+		obj->vertices[i].v2 = mesh->positions[mesh->indices[i].p*3+2]; 
 
 		// Copy normals:
-		obj.vertices[i].n0 = mesh->normals[mesh->indices[i].n*3];
-		obj.vertices[i].n1 = mesh->normals[mesh->indices[i].n*3+1];
-		obj.vertices[i].n2 = mesh->normals[mesh->indices[i].n*3+2]; 
+		obj->vertices[i].n0 = mesh->normals[mesh->indices[i].n*3];
+		obj->vertices[i].n1 = mesh->normals[mesh->indices[i].n*3+1];
+		obj->vertices[i].n2 = mesh->normals[mesh->indices[i].n*3+2]; 
 
 		// Copy texture coordinates:
-		obj.vertices[i].t0 = mesh->texcoords[mesh->indices[i].t*2];
-		obj.vertices[i].t1 = mesh->texcoords[mesh->indices[i].t*2+1];
+		obj->vertices[i].t0 = mesh->texcoords[mesh->indices[i].t*2];
+		obj->vertices[i].t1 = mesh->texcoords[mesh->indices[i].t*2+1];
 	}
 
-	glGenBuffers(1, &obj.VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, obj.VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(struct vertex) * obj.vertexCount, (float*) obj.vertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &obj->VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, obj->VBO);
+	glBufferData(
+			GL_ARRAY_BUFFER, 
+			sizeof(struct vertex) * obj->vertexCount, 
+			(float*) obj->vertices, 
+			GL_STATIC_DRAW
+	);
 
 	// Normals
 	// -------
@@ -56,20 +112,23 @@ object3D readObject(const char* objFilePath) {
 	return obj;
 }
 
-void freeObject(object3D obj) {
+void freeObject(object3D* obj) {
 	// You could free right after handing over to the GPU
-	free(obj.vertices);
+	free(obj->vertices);
+	free(obj);
 }
 
-void drawObject(uint32_t program, object3D obj) {
+void drawObject(uint32_t program, object3D* obj) {
 	/* Draws an object: 
 	 * 
 	 * TODO:
 	 *
-	 * Handle the glGetAttribLocation calls in shader.c:
-	 *   + Get a shader 
+	 * Fixing Shaders:
+	 *   + Create some sort of shader struct
+	 *   + Also functions to handle that struct in shader.c
 	 */
 
+	
 	unsigned int vertexPos = glGetAttribLocation(program, "aPos");
 	unsigned int normalPos = glGetAttribLocation(program, "aNormal");
 	unsigned int texPos = glGetAttribLocation(program, "aTex");
@@ -77,7 +136,7 @@ void drawObject(uint32_t program, object3D obj) {
 	glUseProgram(program);
 
 	// VBO SHIT
-	glBindBuffer(GL_ARRAY_BUFFER, obj.VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, obj->VBO);
 
 	glVertexAttribPointer(
 		vertexPos,
@@ -109,13 +168,15 @@ void drawObject(uint32_t program, object3D obj) {
 	);
 	glEnableVertexAttribArray(texPos); 
 
+	// Texture
+	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+	glBindTexture(GL_TEXTURE_2D, obj->texID);
 
-	// IBO & DRAW
-
+	// Draw call
 	glDrawArrays(
 		GL_TRIANGLES,
 		0,
-		obj.vertexCount
+		obj->vertexCount
 	);
 
 	glUseProgram(0);

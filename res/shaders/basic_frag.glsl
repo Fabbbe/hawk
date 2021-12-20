@@ -4,6 +4,9 @@ out vec4 fragColor;
 in vec4 vertColor;
 in vec3 vertNormal;
 in vec3 vertPos;
+in vec2 vertTex;
+
+uniform sampler2D ourTexture;
 
 void main() {
 	// Constants
@@ -11,7 +14,7 @@ void main() {
 
 	vec3 ambientColor =	vec3(1.0f,  1.0f, 1.0f);
 	vec3 objectColor =	vec3(0.8f,  0.0f, 1.0f);
-	vec3 lightPos =		vec3(30.0f, 0.0f, 40.0f);
+	vec3 lightPos =		vec3(20.0f, 0.0f, -40.0f);
 	vec3 lightColor =	vec3(1.0f,  1.0f, 1.0f);
 
 	// Diffuse
@@ -31,6 +34,6 @@ void main() {
 
 	// Combine them
 	// ============
-	vec3 result = (diffuse + ambient) * objectColor;
+	vec3 result = (diffuse + ambient) * vec3(texture(ourTexture, vertTex));
 	fragColor = vec4(result, 1.0f);
 }
