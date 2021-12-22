@@ -19,9 +19,21 @@
  * char* items[itemCount * 3]; 
  *
  * Although this is c99 it might not work on all compilers and might be a bit 
- * funky when used.
+ * funky when used. malloc is safer, but don't forget to free!
  *
  * TODO:
+ *
+ * Some level file format:
+ *   + CSV, XML are candidates
+ *   + XML is more thorough and easier to add features to, but more difficult 
+ *     to read properly.
+ *
+ * view bobbing:
+ *   + Minecraft time!
+ *   + Player position differs from the camera position
+ *
+ * Some GUI system:
+ *   + This one could be HARD!
  *
  * Make 3D Great Again:
  *   + Get a better way to specify vertex attribs (handled in drawObject atm)
