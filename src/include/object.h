@@ -2,6 +2,7 @@
 #define OBJECT_H
 
 #include "include/libs.h"
+#include "include/shader.h"
 
 #define PATH_LENGTH 256
 // The base vertex
@@ -32,6 +33,8 @@ typedef struct {
 	uint32_t texID;
 	char texPath[PATH_LENGTH];
 	
+	// For OpenGL model uniform
+	mat4 modelMatrix;
 } object3D;
 
 object3D* readObject(const char* objFilePath);

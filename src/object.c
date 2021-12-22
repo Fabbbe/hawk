@@ -6,63 +6,67 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "include/stb_image.h"
 
+// Use this for any missing texture
+// This file MUST exist for program to run
+#define ERROR_IMAGE_PATH "./res/error.png\0"
+
 object3D* readObject(const char* objFilePath) {
-	/* Reads an object using fast_obj->h and returns the shit
+	/* Reads an object using fast_obj.h and returns the shit
 	 *
 	 * TODO:
 	 *
-	 * Error out when file does not exist:
-	 *   + access() function in unistd.h
-	 * 
-	 *
 	 */
-	object3D* obj = (object3D*)malloc(sizeof(object3D));
+	object3D* obj = (object3D*)malloc(sizeof(object3D)); // Small malloc
 	fastObjMesh* mesh; 
 
+	// Default value
 	obj->vertices = NULL;
+	
+	// Since initializing any other way would be a pain
+	glm_mat4_copy(GLM_MAT4_IDENTITY, obj->modelMatrix);
 
 	// VAO Shit 
 	glGenVertexArrays(1, &obj->VAO);
 	glBindVertexArray(obj->VAO);
 
 	// Read the mesh
+	// This needs to be done before the texture loading since it reads the .mtl
 	mesh = fast_obj_read(objFilePath);
 	if (mesh == NULL) {
 		fprintf(stderr, "Could not load object '%s'\n", objFilePath);
 		return obj;
 	}
 
-
-	obj->vertexCount = mesh->face_count*3; // Amount of vertices after being read
-	obj->vertices = (struct vertex*)malloc(sizeof(struct vertex)*(obj->vertexCount));
-
 	// Texture
 	// -------
-
-	memset(obj->texPath, '\0', sizeof(obj->texPath));
 	
-	if (mesh->materials != NULL) {
-		strcpy(obj->texPath, mesh->materials[0].map_Kd.path); 
-	}
-	else {
-		strcpy(obj->texPath, "./res/error.png\0");
-	}
-	//printf("Texture Path: %s\n", obj->texPath);
-	
+	// OpenGL Texture buffers
 	glGenTextures(1, &obj->texID);  
 	glBindTexture(GL_TEXTURE_2D, obj->texID);  
 
+	// OpenGL buffer settings
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	
+	// First we need to find texture paths:
+	memset(obj->texPath, '\0', sizeof(obj->texPath));
+	if (mesh->materials != NULL) {
+		strcpy(obj->texPath, mesh->materials[0].map_Kd.path); 
+	}
+	else {
+		strcpy(obj->texPath, ERROR_IMAGE_PATH);
+	}
 
+	//printf("Texture Path: %s\n", obj->texPath);
+	// Load image
 	stbi_set_flip_vertically_on_load(true); // For OpenGL compatability
 	int texWidth, texHeight, nrChannels;
 	unsigned char *data = stbi_load(obj->texPath, &texWidth, &texHeight, &nrChannels, 0); 
-	if (data == NULL) { // Define so that all imported textures have RGB
+	if (data == NULL) { // All imported textures should have ONLY RGB
 		fprintf(stderr, "Could not open '%s'\n", obj->texPath);
-		strcpy(obj->texPath, "./res/error.png\0");
+		strcpy(obj->texPath, ERROR_IMAGE_PATH);
 		data = stbi_load(obj->texPath, &texWidth, &texHeight, &nrChannels, 0); 
 	}
 	glTexImage2D(GL_TEXTURE_2D, 
@@ -75,11 +79,18 @@ object3D* readObject(const char* objFilePath) {
 
 	stbi_image_free(data);
 
-	// Copy object into OpenGL:
 	// Vertices
 	// --------
+
+	obj->vertexCount = mesh->face_count*3; // Amount of vertices after being read
+	obj->vertices = (struct vertex*)malloc(sizeof(struct vertex)*(obj->vertexCount));
+
 	
 	// Should copy 1:1 the verticies to correct indices
+	//
+	// This is probably one of the fastest ways to do this copying since 
+	// methods like memcpy wouldn't work since we have to interpolate the new 
+	// array.
 	for (int i = 0; i < obj->vertexCount; ++i) {
 		// Copy vertices:
 		obj->vertices[i].v0 = mesh->positions[mesh->indices[i].p*3];
@@ -96,6 +107,7 @@ object3D* readObject(const char* objFilePath) {
 		obj->vertices[i].t1 = mesh->texcoords[mesh->indices[i].t*2+1];
 	}
 
+	// Copy the generated buffers to OpenGL
 	glGenBuffers(1, &obj->VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, obj->VBO);
 	glBufferData(
@@ -104,11 +116,8 @@ object3D* readObject(const char* objFilePath) {
 			(float*) obj->vertices, 
 			GL_STATIC_DRAW
 	);
-
-	// Normals
-	// -------
-	
 	fast_obj_destroy(mesh);
+
 	return obj;
 }
 
@@ -128,7 +137,9 @@ void drawObject(uint32_t program, object3D* obj) {
 	 *   + Also functions to handle that struct in shader.c
 	 */
 
-	
+	// This is necessary to do at the beginning
+	uniformMatrix4fv(program, "model", obj->modelMatrix);
+
 	unsigned int vertexPos = glGetAttribLocation(program, "aPos");
 	unsigned int normalPos = glGetAttribLocation(program, "aNormal");
 	unsigned int texPos = glGetAttribLocation(program, "aTex");
@@ -171,6 +182,9 @@ void drawObject(uint32_t program, object3D* obj) {
 	// Texture
 	glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
 	glBindTexture(GL_TEXTURE_2D, obj->texID);
+
+	// Model uniform
+	//
 
 	// Draw call
 	glDrawArrays(
