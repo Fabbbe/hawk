@@ -10,12 +10,14 @@
 // This file MUST exist for program to run
 #define ERROR_IMAGE_PATH "./res/error.png\0"
 
+/**
+ * readObject:
+ * @objFilePath: Path to the .obj file
+ *
+ * reads an object from file
+ */
 Object3D* readObject(const char* objFilePath) {
-	/* Reads an object using fast_obj.h and returns the shit
-	 *
-	 * TODO:
-	 *
-	 */
+
 	Object3D* obj = (Object3D*)malloc(sizeof(Object3D)); // Small malloc
 	fastObjMesh* mesh; 
 
@@ -121,21 +123,32 @@ Object3D* readObject(const char* objFilePath) {
 	return obj;
 }
 
+
+/**
+ * freeObject:
+ * @obj: the object to free
+ *
+ * frees an object, which becomes unusable afterwards
+ */
 void freeObject(Object3D* obj) {
 	// You could free right after handing over to the GPU
 	free(obj->vertices);
 	free(obj);
 }
 
+/**
+ * drawObject:
+ * @program: the shader program to use
+ * @obj: the object to draw
+ *
+ * draws an object to the screen
+ *
+ * TODO:
+ * Fixing Shaders:
+ *   + Create some sort of shader struct
+ *   + Also functions to handle that struct in shader.c
+ */
 void drawObject(uint32_t program, Object3D* obj) {
-	/* Draws an object: 
-	 * 
-	 * TODO:
-	 *
-	 * Fixing Shaders:
-	 *   + Create some sort of shader struct
-	 *   + Also functions to handle that struct in shader.c
-	 */
 
 	// This is necessary to do at the beginning
 	uniformMatrix4fv(program, "model", obj->modelMatrix);
