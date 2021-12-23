@@ -6,7 +6,7 @@
 
 #define PATH_LENGTH 256
 // The base vertex
-struct vertex {
+struct Vertex {
 	
 	// Vertices:
 	float v0;
@@ -27,7 +27,7 @@ typedef struct {
 	uint32_t VBO; // ID for verteces
 	uint32_t VAO;
 	unsigned int vertexCount;
-	struct vertex* vertices;
+	struct Vertex* vertices;
 
 	// Textures
 	uint32_t texID;
@@ -35,12 +35,12 @@ typedef struct {
 	
 	// For OpenGL model uniform
 	mat4 modelMatrix;
-} object3D;
+} Object3D;
 
-object3D* readObject(const char* objFilePath);
+Object3D* readObject(const char* objFilePath);
 
-void freeObject(object3D* obj);
+void freeObject(Object3D* obj);
 
-void drawObject(uint32_t program, object3D* obj);
+void drawObject(uint32_t program, Object3D* obj);
 
 #endif

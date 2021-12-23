@@ -21,12 +21,13 @@
  * Although this is c99 it might not work on all compilers and might be a bit 
  * funky when used. malloc is safer, but don't forget to free!
  *
- * TODO:
+ * TODO (ordered after priority):
  *
- * Some level file format:
- *   + CSV, XML are candidates
- *   + XML is more thorough and easier to add features to, but more difficult 
- *     to read properly.
+ * Implement drawScene(currentScene);
+ * Make the scene reading better!
+ * Make lights a part of the scene file (1D Texture)
+ *
+ * Raymarching to find what player is looking at:
  *
  * view bobbing:
  *   + Minecraft time!
@@ -43,6 +44,7 @@
 #include "include/libs.h"
 #include "include/shader.h"
 #include "include/object.h"
+#include "include/scene.h"
 
 #define INIT_WINDOW_HEIGHT 480
 #define INIT_WINDOW_WIDTH 640
@@ -58,10 +60,10 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
 SDL_Window* window = NULL;
 
 int main(int argc, char* argv[]) {
-	uint32_t windowWidth = 640;
-	uint32_t windowHeight = 480; 
 	SDL_GLContext context;
 
+	uint32_t windowWidth = INIT_WINDOW_WIDTH;
+	uint32_t windowHeight = INIT_WINDOW_HEIGHT; 
 
 	if (!init()) {
 		fprintf(stderr, "Failed to init!\n");
@@ -88,7 +90,6 @@ int main(int argc, char* argv[]) {
 	glDebugMessageCallback(debugCallback, NULL); 
 #endif
 
-	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 
 	// OpenGL Vertecies
@@ -104,7 +105,7 @@ int main(int argc, char* argv[]) {
 	// --------
 	
 	// change to a struct!! :-)
-	// ex: program basicShader;
+	// ex: program basicShader = createProgramVF(...);
 	uint32_t basicShader;
 	basicShader = createProgramVF(
 			"./res/shaders/basic_vert.glsl", 
@@ -113,16 +114,15 @@ int main(int argc, char* argv[]) {
 
 	// Objects
 	// -------
-	object3D* apartment = readObject("./res/models/apartment.obj");
-	object3D* cabinet = readObject("./res/models/cabinet.obj");
-	glm_translate(cabinet->modelMatrix, (vec3){1.0f, 0.0f, 4.0f}); 
+	
+	Scene* level = loadScene("res/scenes/level_01.scene"); // Next generation shit!
 
 	// CGLM
 	// ----
 	mat4 view = GLM_MAT4_IDENTITY_INIT;
 	mat4 projection = GLM_MAT4_IDENTITY_INIT;
 
-	vec3 cameraPos = {0.0f, 1.6f, -10.0f};
+	vec3 cameraPos = {0.0f, 1.6f, 0.0f}; // 1.6 is eye level
 	vec3 cameraUp = {0.0f, 1.0f, 0.0f};
 	vec3 cameraDir = {0.0f, 0.0f, 0.0f};
 
@@ -151,7 +151,6 @@ int main(int argc, char* argv[]) {
 
 	// Process
 	// =======
-	
 
 	bool wireframe = false;
 	bool fullscreen = false;
@@ -172,7 +171,7 @@ int main(int argc, char* argv[]) {
 			if (event.type == SDL_MOUSEMOTION) {
 				yaw -= 0.0015f * (float)event.motion.xrel; // too large or small values will make it innacurate
 				pitch -= 0.0015f * (float)event.motion.yrel; 
-				if (pitch > GLM_PI / 2.1f)
+				if (pitch > GLM_PI / 2.1f) // Caps so you cant look too far up/down
 					pitch = GLM_PI / 2.1f;
 				else if (pitch < -GLM_PI / 2.1f)
 					pitch = -GLM_PI / 2.1f;
@@ -189,6 +188,10 @@ int main(int argc, char* argv[]) {
 							SDL_SetRelativeMouseMode(SDL_FALSE);
 						else
 							SDL_SetRelativeMouseMode(SDL_TRUE);
+						break;
+					case SDLK_F8: // Reload scene
+						destroyScene(level);
+						level = loadScene("res/scenes/level_01.scene");
 						break;
 					case SDLK_F11:
 						if (fullscreen) {
@@ -241,35 +244,23 @@ int main(int argc, char* argv[]) {
 			const unsigned char* keyboardState = SDL_GetKeyboardState(NULL); 
 
 			// flying camera controls
-			// Q and E moves up and down
 			// I see a lot of people write this by watching for presses/releases 
-			// of these buttons
+			// of these buttons, but that looks like shit
 			if (keyboardState[SDL_SCANCODE_W]) {
 				cameraPos[2] += moveSpeed * cos(yaw);
 				cameraPos[0] += moveSpeed * sin(yaw);
-			}
-			if (keyboardState[SDL_SCANCODE_S]) {
-				cameraPos[2] -= moveSpeed * cos(yaw);
-				cameraPos[0] -= moveSpeed * sin(yaw);
 			}
 			if (keyboardState[SDL_SCANCODE_A]) {
 				cameraPos[2] -= moveSpeed * sin(yaw);
 				cameraPos[0] += moveSpeed * cos(yaw);
 			}
+			if (keyboardState[SDL_SCANCODE_S]) {
+				cameraPos[2] -= moveSpeed * cos(yaw);
+				cameraPos[0] -= moveSpeed * sin(yaw);
+			}
 			if (keyboardState[SDL_SCANCODE_D]) {
 				cameraPos[2] += moveSpeed * sin(yaw);
 				cameraPos[0] -= moveSpeed * cos(yaw);
-			}
-			/*
-			if (keyboardState[SDL_SCANCODE_Q]) {
-				cameraPos[1] += moveSpeed;
-			}
-			if (keyboardState[SDL_SCANCODE_E]) {
-				cameraPos[1] -= moveSpeed;
-			}
-			*/
-			if (keyboardState[SDL_SCANCODE_R]) {
-				glm_rotate_y(cabinet->modelMatrix, 0.01f, cabinet->modelMatrix);
 			}
 		}
 
@@ -294,16 +285,15 @@ int main(int argc, char* argv[]) {
 
 		// Draw the Triangles
 		// ==================
-		drawObject(basicShader, apartment);
-		drawObject(basicShader, cabinet);
+		
+		drawScene(basicShader, level);
 
 		// Show it on the Window
 		// =====================
 		SDL_GL_SwapWindow(window);
 	}
 
-	freeObject(apartment);
-	freeObject(cabinet);
+	destroyScene(level);
 
 	// KILL
 	// ====
@@ -325,6 +315,9 @@ bool init() {
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 #ifndef NDEBUG
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
@@ -341,6 +334,8 @@ bool init() {
 		return false;
 	}
 
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
 	return true;
 }
 void kill() {
@@ -350,7 +345,7 @@ void kill() {
 
 // I could expand this
 void debugCallback(GLenum source, GLenum type, GLuint id,
-   GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+		GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "OpenGL Debug Message: %s", message);
 }
 // Thanks for reading

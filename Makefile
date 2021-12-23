@@ -1,10 +1,12 @@
+# Makefile
 BUILD_DIR ?= ./build
 SRC_DIR ?= ./src
 PROGRAM_NAME=hawk
-IN_FILES=shader.o object.o 
+IN_FILES=shader.o object.o scene.o
 
 CC=gcc
-CFLAGS=-Wall -I./src -lm -lSDL2 -O2 -lGL -lGLEW -lcglm -g3# -DNDEBUG
+PKG_CONFIG=$(shell pkg-config --cflags --libs libxml-2.0 sdl2 gl glew cglm)
+CFLAGS=-Wall -I./src -lm -O2 -g3 $(PKG_CONFIG) #-DNDEBUG
 
 $(PROGRAM_NAME): src/main.c $(IN_FILES)
 	$(CC) $(CFLAGS) -o $@ $^

@@ -4,6 +4,11 @@
 #ifndef LIBS_H
 #define LIBS_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <math.h>
+
 #include <GL/glew.h> 
 
 #include <SDL2/SDL.h> 
@@ -14,9 +19,7 @@
 
 #include <cglm/cglm.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #endif

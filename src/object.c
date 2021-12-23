@@ -10,20 +10,20 @@
 // This file MUST exist for program to run
 #define ERROR_IMAGE_PATH "./res/error.png\0"
 
-object3D* readObject(const char* objFilePath) {
+Object3D* readObject(const char* objFilePath) {
 	/* Reads an object using fast_obj.h and returns the shit
 	 *
 	 * TODO:
 	 *
 	 */
-	object3D* obj = (object3D*)malloc(sizeof(object3D)); // Small malloc
+	Object3D* obj = (Object3D*)malloc(sizeof(Object3D)); // Small malloc
 	fastObjMesh* mesh; 
 
 	// Default value
 	obj->vertices = NULL;
 	
 	// Since initializing any other way would be a pain
-	glm_mat4_copy(GLM_MAT4_IDENTITY, obj->modelMatrix);
+	glm_mat4_identity(obj->modelMatrix);
 
 	// VAO Shit 
 	glGenVertexArrays(1, &obj->VAO);
@@ -83,7 +83,7 @@ object3D* readObject(const char* objFilePath) {
 	// --------
 
 	obj->vertexCount = mesh->face_count*3; // Amount of vertices after being read
-	obj->vertices = (struct vertex*)malloc(sizeof(struct vertex)*(obj->vertexCount));
+	obj->vertices = (struct Vertex*)malloc(sizeof(struct Vertex)*(obj->vertexCount));
 
 	
 	// Should copy 1:1 the verticies to correct indices
@@ -112,7 +112,7 @@ object3D* readObject(const char* objFilePath) {
 	glBindBuffer(GL_ARRAY_BUFFER, obj->VBO);
 	glBufferData(
 			GL_ARRAY_BUFFER, 
-			sizeof(struct vertex) * obj->vertexCount, 
+			sizeof(struct Vertex) * obj->vertexCount, 
 			(float*) obj->vertices, 
 			GL_STATIC_DRAW
 	);
@@ -121,13 +121,13 @@ object3D* readObject(const char* objFilePath) {
 	return obj;
 }
 
-void freeObject(object3D* obj) {
+void freeObject(Object3D* obj) {
 	// You could free right after handing over to the GPU
 	free(obj->vertices);
 	free(obj);
 }
 
-void drawObject(uint32_t program, object3D* obj) {
+void drawObject(uint32_t program, Object3D* obj) {
 	/* Draws an object: 
 	 * 
 	 * TODO:
@@ -154,7 +154,7 @@ void drawObject(uint32_t program, object3D* obj) {
 		3,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(struct vertex),
+		sizeof(struct Vertex),
 		(void*)0
 	);
 	glEnableVertexAttribArray(vertexPos); 
@@ -164,7 +164,7 @@ void drawObject(uint32_t program, object3D* obj) {
 		3,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(struct vertex),
+		sizeof(struct Vertex),
 		(void*)(sizeof(float)*3)
 	);
 	glEnableVertexAttribArray(normalPos); 
@@ -174,7 +174,7 @@ void drawObject(uint32_t program, object3D* obj) {
 		2,
 		GL_FLOAT,
 		GL_FALSE,
-		sizeof(struct vertex),
+		sizeof(struct Vertex),
 		(void*)(sizeof(float)*6)
 	);
 	glEnableVertexAttribArray(texPos); 
