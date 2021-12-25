@@ -9,8 +9,10 @@
  * their transformations.
  *
  * The XML specifications can be read at doc/scene.md.
+ *
+ * TODO:
+ *   + Read lights from the XML and add to a scene.
  */
-
 Scene* loadScene(const char* sceneFilePath) {
 	xmlDoc* scnFile;
 	xmlNode* scnRootElement;

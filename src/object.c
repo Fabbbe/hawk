@@ -10,6 +10,84 @@
 // This file MUST exist for program to run
 #define ERROR_IMAGE_PATH "./res/error.png\0"
 
+
+/**
+ * pointIsOverMesh:
+ * @point: point to check if over mesh
+ * @mesh: the mesh to check
+ * @distance: pointer to distance value for retrurning
+ *
+ * Checks wether point is over the mesh and returns bool. the distance value 
+ * is also changed if true;
+ */
+bool pointIsOverMesh(vec3 point, Mesh3D* mesh, float* distance) {
+	bool isOver = false;
+	for (int i=0; i < mesh->vertexCount/3 ; ++i) {
+		// Triangle vertices
+		vec3 v0;
+		vec3 v1;
+		vec3 v2;
+
+		vec3 down = {0.0f, -1.0f, 0.0f};
+
+		v0[0] = mesh->vertices[i*3].v0;
+		v0[1] = mesh->vertices[i*3].v1;
+		v0[2] = mesh->vertices[i*3].v2;
+		
+		v1[0] = mesh->vertices[i*3+1].v0;
+		v1[1] = mesh->vertices[i*3+1].v1;
+		v1[2] = mesh->vertices[i*3+1].v2;
+
+		v2[0] = mesh->vertices[i*3+2].v0;
+		v2[1] = mesh->vertices[i*3+2].v1;
+		v2[2] = mesh->vertices[i*3+2].v2;
+
+		if (glm_ray_triangle(point, down, v0, v1, v2, distance)){
+			isOver = true;
+			//break;
+		}
+	}
+	return isOver;
+}
+
+/**
+ * readMesh:
+ * @meshFilePath: Path to the .obj file
+ *
+ * reads a 3D mesh from a file.
+ */
+Mesh3D* readMesh(const char* meshFilePath) {
+	Mesh3D* mesh = (Mesh3D*)malloc(sizeof(Mesh3D));
+	mesh->vertices = NULL;
+
+	fastObjMesh* foMesh; 
+
+	foMesh = fast_obj_read(meshFilePath);
+	if (mesh == NULL) {
+		fprintf(stderr, "Could not load object '%s'\n", meshFilePath);
+		return mesh;
+	}
+
+	mesh->vertexCount = foMesh->face_count*3; // Amount of vertices after being read
+	mesh->vertices = (struct MeshVertex*)malloc(sizeof(struct MeshVertex)*(mesh->vertexCount));
+
+	for (int i = 0; i < mesh->vertexCount; ++i) {
+		// Copy vertices:
+		mesh->vertices[i].v0 = foMesh->positions[foMesh->indices[i].p*3];
+		mesh->vertices[i].v1 = foMesh->positions[foMesh->indices[i].p*3+1];
+		mesh->vertices[i].v2 = foMesh->positions[foMesh->indices[i].p*3+2]; 
+	}
+	printf("%lf,%lf,%lf\n", 
+			mesh->vertices[0].v0,
+			mesh->vertices[0].v1,
+			mesh->vertices[0].v2
+	);
+
+	fast_obj_destroy(foMesh);
+
+	return mesh;
+}
+
 /**
  * readObject:
  * @objFilePath: Path to the .obj file

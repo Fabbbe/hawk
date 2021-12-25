@@ -23,9 +23,10 @@
  *
  * TODO (ordered after priority):
  *
- * Implement drawScene(currentScene);
+ * Cast a ray to find if the player is standing on ground
+ *
  * Make the scene reading better!
- * Make lights a part of the scene file (1D Texture)
+ * Make lights a part of the scene file (1D Texture) 
  *
  * Raymarching to find what player is looking at:
  *
@@ -116,6 +117,7 @@ int main(int argc, char* argv[]) {
 	// -------
 	
 	Scene* level = loadScene("res/scenes/level_01.scene"); // Next generation shit!
+	Mesh3D* walkMesh = readMesh("res/models/apartment_floor_mesh.obj");
 
 	// CGLM
 	// ----
@@ -239,6 +241,8 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		float playerVelX = 0.0f;
+		float playerVelZ = 0.0f;
 		{	// Keyboard state reading and input
 			// This is a nice way of getting game-like input
 			const unsigned char* keyboardState = SDL_GetKeyboardState(NULL); 
@@ -247,21 +251,32 @@ int main(int argc, char* argv[]) {
 			// I see a lot of people write this by watching for presses/releases 
 			// of these buttons, but that looks like shit
 			if (keyboardState[SDL_SCANCODE_W]) {
-				cameraPos[2] += moveSpeed * cos(yaw);
-				cameraPos[0] += moveSpeed * sin(yaw);
+				playerVelZ += moveSpeed * cos(yaw);
+				playerVelX += moveSpeed * sin(yaw);
 			}
 			if (keyboardState[SDL_SCANCODE_A]) {
-				cameraPos[2] -= moveSpeed * sin(yaw);
-				cameraPos[0] += moveSpeed * cos(yaw);
+				playerVelZ -= moveSpeed * sin(yaw);
+				playerVelX += moveSpeed * cos(yaw);
 			}
 			if (keyboardState[SDL_SCANCODE_S]) {
-				cameraPos[2] -= moveSpeed * cos(yaw);
-				cameraPos[0] -= moveSpeed * sin(yaw);
+				playerVelZ -= moveSpeed * cos(yaw);
+				playerVelX -= moveSpeed * sin(yaw);
 			}
 			if (keyboardState[SDL_SCANCODE_D]) {
-				cameraPos[2] += moveSpeed * sin(yaw);
-				cameraPos[0] -= moveSpeed * cos(yaw);
+				playerVelZ += moveSpeed * sin(yaw);
+				playerVelX -= moveSpeed * cos(yaw);
 			}
+		}
+		
+		// This could be done a lot better
+		cameraPos[0] += playerVelX;
+		if (!pointIsOverMesh(cameraPos, walkMesh, NULL)) {
+			//printf("Not over floor!\n");
+			cameraPos[0] -= playerVelX;
+		}
+		cameraPos[2] += playerVelZ;
+		if (!pointIsOverMesh(cameraPos, walkMesh, NULL)) {
+			cameraPos[2] -= playerVelZ;
 		}
 
 		// CAMERA MATH
@@ -276,11 +291,12 @@ int main(int argc, char* argv[]) {
 				view
 		);
 		uniformMatrix4fv(basicShader, "view", view);
+
 		
 		// Clear the Viewport
 		// ==================
 		glViewport(0, 0, windowWidth, windowHeight);
-		glClearColor(0.2f, 0.2f, 0.3f, 0.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw the Triangles

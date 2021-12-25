@@ -37,6 +37,23 @@ typedef struct {
 	mat4 modelMatrix;
 } Object3D;
 
+// Mesh vertex
+struct MeshVertex {
+	// Vertices:
+	float v0;
+	float v1;
+	float v2;
+};
+
+typedef struct {
+	uint32_t vertexCount;
+	struct MeshVertex* vertices;
+} Mesh3D;
+
+bool pointIsOverMesh(vec3 point, Mesh3D* mesh, float* distance);
+
+Mesh3D* readMesh(const char* meshFilePath);
+
 Object3D* readObject(const char* objFilePath);
 
 void freeObject(Object3D* obj);
