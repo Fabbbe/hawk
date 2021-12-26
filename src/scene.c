@@ -5,15 +5,15 @@
  * @aNode: xmlNode to search
  * @attrName: the name of attribute to search for
  *
- * returns content of attribute, NULL if not found
+ * returns content of attribute, empty string if not found
  */
-char* findAttr(xmlNode* aNode, const char* attrName) {
+const char* findAttr(xmlNode* aNode, const char* attrName) {
 	for (xmlAttr* curAttr = aNode->properties; curAttr; curAttr = curAttr->next) {
 		if (strcmp((const char*)curAttr->name, attrName) == 0) {
-			return (char*)curAttr->children->content; 
+			return (const char*)curAttr->children->content; 
 		}
 	}
-	return NULL;
+	return "\0"; // should not be eaten by garbage collectors
 }
 
 /** 
@@ -83,24 +83,20 @@ Scene* loadScene(const char* sceneFilePath) {
 				// curNode->properties contains what we need
 				if (curNode->properties == NULL)
 					fprintf(stderr, "Invalid object, no properties\n");
-				else {
-					if (findAttr(curNode, "transform") != NULL) {
-						sscanf(
-								findAttr(curNode, "transform"), 
-								"%f,%f,%f", 
-								&scn->objects[objectNum].x,
-								&scn->objects[objectNum].y,
-								&scn->objects[objectNum].z
-						);
-					} if (findAttr(curNode, "rotation") != NULL) {
-						sscanf(
-								findAttr(curNode, "rotation"), 
-								"%f", 
-								&scn->objects[objectNum].rot
-						);
-					} if (findAttr(curNode, "path") != NULL) {
-						strcpy(scn->objects[objectNum].modelPath, findAttr(curNode, "path"));
-					}
+				else { // sscanf returns EOF if it cant fill variables
+					sscanf(
+							findAttr(curNode, "transform"), 
+							"%f,%f,%f", 
+							&scn->objects[objectNum].x,
+							&scn->objects[objectNum].y,
+							&scn->objects[objectNum].z
+					);
+					sscanf(
+							findAttr(curNode, "rotation"), 
+							"%f", 
+							&scn->objects[objectNum].rot
+					);
+					strcpy(scn->objects[objectNum].modelPath, findAttr(curNode, "path"));
 					//scn->objects[objectNum];
 				}
 				++objectNum;
