@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<SCENE>
+<SCENE bounds="res/models/apartment_floor_mesh.obj" >
 	<object transform="0.0,0.0,0.0" rotation="0" path="res/models/apartment.obj" />
 	<object transform="1.0,0.0,4.0" rotation="70" path="res/models/cabinet.obj" />
 	<object transform="-2.0,0.0,4.0" rotation="90" path="res/models/cabinet.obj" />

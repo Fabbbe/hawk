@@ -1,5 +1,6 @@
 /* HAWK
  * ====
+ * v0.0.1
  * 
  * Copyright (c) 2021 Fabian Beskow 
  *
@@ -23,16 +24,17 @@
  *
  * TODO (ordered after priority):
  *
- * Cast a ray to find if the player is standing on ground
+ * view bobbing:
+ *   + Minecraft time!
+ *   + Player position differs from the camera position
  *
- * Make the scene reading better!
+ * Better movement
+ *
+ * Make the player -> ground relationship better
  * Make lights a part of the scene file (1D Texture) 
  *
  * Raymarching to find what player is looking at:
  *
- * view bobbing:
- *   + Minecraft time!
- *   + Player position differs from the camera position
  *
  * Some GUI system:
  *   + This one could be HARD!
@@ -117,7 +119,6 @@ int main(int argc, char* argv[]) {
 	// -------
 	
 	Scene* level = loadScene("res/scenes/level_01.scene"); // Next generation shit!
-	Mesh3D* walkMesh = readMesh("res/models/apartment_floor_mesh.obj");
 
 	// CGLM
 	// ----
@@ -270,13 +271,12 @@ int main(int argc, char* argv[]) {
 		
 		// This could be done a lot better
 		cameraPos[0] += playerVelX;
-		if (!pointIsOverMesh(cameraPos, walkMesh, NULL)) {
-			//printf("Not over floor!\n");
-			cameraPos[0] -= playerVelX;
+		if (!pointIsOverMesh(cameraPos, level->bounds, NULL)) {
+			cameraPos[0] -= playerVelX * 1.02f; 
 		}
 		cameraPos[2] += playerVelZ;
-		if (!pointIsOverMesh(cameraPos, walkMesh, NULL)) {
-			cameraPos[2] -= playerVelZ;
+		if (!pointIsOverMesh(cameraPos, level->bounds, NULL)) {
+			cameraPos[2] -= playerVelZ * 1.02f;
 		}
 
 		// CAMERA MATH

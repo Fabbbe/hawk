@@ -31,6 +31,10 @@ struct SceneObject {
 typedef struct { // This is the main struct
 	uint32_t objectCount;
 	struct SceneObject* objects;
+
+	// navMesh might be a slight misnomer
+	char boundsPath[PATH_LENGTH];
+	Mesh3D* bounds;
 } Scene;
 
 Scene* loadScene(const char* sceneFilePath);

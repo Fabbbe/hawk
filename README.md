@@ -1,4 +1,4 @@
-# HAWK
+# HAWK v0.0.1
 
 A small OpenGL program written while I was bored in programming class.
 

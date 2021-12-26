@@ -77,11 +77,6 @@ Mesh3D* readMesh(const char* meshFilePath) {
 		mesh->vertices[i].v1 = foMesh->positions[foMesh->indices[i].p*3+1];
 		mesh->vertices[i].v2 = foMesh->positions[foMesh->indices[i].p*3+2]; 
 	}
-	printf("%lf,%lf,%lf\n", 
-			mesh->vertices[0].v0,
-			mesh->vertices[0].v1,
-			mesh->vertices[0].v2
-	);
 
 	fast_obj_destroy(foMesh);
 
@@ -212,6 +207,10 @@ void freeObject(Object3D* obj) {
 	// You could free right after handing over to the GPU
 	free(obj->vertices);
 	free(obj);
+}
+void freeMesh(Mesh3D* mesh) {
+	free(mesh->vertices);
+	free(mesh);
 }
 
 /**

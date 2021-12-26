@@ -57,6 +57,7 @@ Mesh3D* readMesh(const char* meshFilePath);
 Object3D* readObject(const char* objFilePath);
 
 void freeObject(Object3D* obj);
+void freeMesh(Mesh3D* mesh);
 
 void drawObject(uint32_t program, Object3D* obj);
 
