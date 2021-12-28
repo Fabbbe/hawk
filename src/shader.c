@@ -115,7 +115,7 @@ Screen* createScreen(uint32_t windowWidth, uint32_t windowHeight, uint32_t scale
 	glGenTextures(1, &scr->frameBufferTexID);
 	glBindTexture(GL_TEXTURE_2D, scr->frameBufferTexID);
 	glTexImage2D(GL_TEXTURE_2D, 
-			0, GL_RGB,
+			0, GL_R3_G3_B2,
 			screenWidth, screenHeight,
 			0, GL_RGB,
 			GL_UNSIGNED_BYTE, NULL
@@ -223,7 +223,7 @@ void updateScreen(Screen* scr, uint32_t windowWidth, uint32_t windowHeight, uint
 
 	glBindTexture(GL_TEXTURE_2D, scr->frameBufferTexID);
 	glTexImage2D(GL_TEXTURE_2D, 
-			0, GL_RGB,
+			0, GL_R3_G3_B2,
 			screenWidth, screenHeight,
 			0, GL_RGB,
 			GL_UNSIGNED_BYTE, NULL

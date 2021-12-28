@@ -46,7 +46,7 @@
 #define INIT_WINDOW_HEIGHT 480
 #define INIT_WINDOW_WIDTH 640
 
-#define SCALE_FACTOR 4
+#define SCALE_FACTOR 2
 
 #define ERROR_LOG_FILE_PATH "./error.log"
 
