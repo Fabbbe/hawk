@@ -90,6 +90,49 @@ uint32_t createProgramVF(const char* vertexSourcePath, const char* fragmentSourc
 	return programVF;
 }
 
+
+void uniform1fv(uint32_t program, const char* uniformName, int count, float* value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniform1fv(location, count, value);
+	glUseProgram(0);
+}
+
+void uniform3fv(uint32_t program, const char* uniformName, int count, float* value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniform3fv(location, count, value);
+	glUseProgram(0);
+}
+
+void uniform1i(uint32_t program, const char* uniformName, int value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniform1i(location, value);
+	glUseProgram(0);
+}
+
+void uniform1f(uint32_t program, const char* uniformName, float value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniform1f(location, value);
+	glUseProgram(0);
+}
+
+void uniform2f(uint32_t program, const char* uniformName, vec2 value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniform2f(location, value[0], value[1]);
+	glUseProgram(0);
+}
+
+void uniform3f(uint32_t program, const char* uniformName, vec3 value) {
+	glUseProgram(program);
+	uint32_t location = glGetUniformLocation(program, uniformName);
+	glUniform3f(location, value[0], value[1], value[2]);
+	glUseProgram(0);
+}
+
 void uniformMatrix4fv(uint32_t program, const char* uniformName, mat4 value) {
 	glUseProgram(program);
 	uint32_t location = glGetUniformLocation(program, uniformName);

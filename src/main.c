@@ -33,14 +33,7 @@
  * Make the player -> ground relationship better
  * Make lights a part of the scene file (1D Texture) 
  *
- * Raymarching to find what player is looking at:
- *
- *
- * Some GUI system:
- *   + This one could be HARD!
- *
- * Make 3D Great Again:
- *   + Get a better way to specify vertex attribs (handled in drawObject atm)
+ * Raymarching to find what player is looking at
  *
  */
 
@@ -154,6 +147,11 @@ int main(int argc, char* argv[]) {
 
 	// Process
 	// =======
+	
+	// player Positions
+	float playerX = 0.0f;
+	float playerY = 0.0f;
+	float playerZ = 0.0f;
 
 	bool wireframe = false;
 	bool fullscreen = false;
@@ -267,6 +265,10 @@ int main(int argc, char* argv[]) {
 				playerVelZ += moveSpeed * sin(yaw);
 				playerVelX -= moveSpeed * cos(yaw);
 			}
+			if (keyboardState[SDL_SCANCODE_LSHIFT]) {
+				playerVelZ *= 1.8f;
+				playerVelX *= 1.8f;
+			}
 		}
 		
 		// This could be done a lot better
@@ -307,6 +309,7 @@ int main(int argc, char* argv[]) {
 		// Show it on the Window
 		// =====================
 		SDL_GL_SwapWindow(window);
+		//running = false;
 	}
 
 	destroyScene(level);
@@ -326,7 +329,7 @@ bool init() {
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
@@ -342,8 +345,8 @@ bool init() {
 	window = SDL_CreateWindow( "Hello Hawk!",
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-			);
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN //| SDL_WINDOW_RESIZABLE
+	);
 
 	if (window == NULL) {
 		fprintf(stderr, "Failed to create window: %s\n", SDL_GetError());
@@ -362,6 +365,6 @@ void kill() {
 // I could expand this
 void debugCallback(GLenum source, GLenum type, GLuint id,
 		GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-	fprintf(stderr, "OpenGL Debug Message: %s", message);
+	fprintf(stdout, "OpenGL Debug Message: %s\n", message);
 }
 // Thanks for reading

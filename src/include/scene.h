@@ -13,8 +13,12 @@
 #include "include/libs.h"
 
 #include "include/object.h"
+//#include "include/shader.h"
 
 #define PATH_LENGTH 256
+
+// Max number of lights in a scene
+#define MAX_LIGHT_COUNT 4
 
 struct SceneObject {
 	// translations of object
@@ -28,9 +32,21 @@ struct SceneObject {
 	Object3D* obj;
 };
 
+struct SceneLight {
+	vec3 position;
+	vec3 color;
+
+	float constant;
+	float linear;
+	float quadratic;
+};
+
 typedef struct { // This is the main struct
 	uint32_t objectCount;
 	struct SceneObject* objects;
+
+	uint32_t lightCount;
+	struct SceneLight* lights;
 
 	// navMesh might be a slight misnomer
 	char boundsPath[PATH_LENGTH];

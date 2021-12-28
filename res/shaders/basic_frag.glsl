@@ -1,39 +1,65 @@
-#version 130
-out vec4 fragColor;
+#version 330 core
 
-in vec4 vertColor;
+#define MAX_LIGHT_COUNT 4
+
 in vec3 vertNormal;
 in vec3 vertPos;
 in vec2 vertTex;
 
+out vec4 fragColor;
+
 uniform sampler2D ourTexture;
 
-void main() {
-	// Constants
-	float ambientStrength = 0.1f;
+struct PointLight {    
+	vec3 position;
+	vec3 color;
 
-	vec3 ambientColor =	vec3(1.0f,  1.0f, 1.0f);
-	//vec3 objectColor =	vec3(0.8f,  0.0f, 1.0f);
-	vec3 lightPos =		vec3(0.0f, 1.4f, 0.0f);
-	vec3 lightColor =	vec3(1.0f,  0.8f, 0.8f);
+	// different strengths
+	float constant;
+	float linear;
+	float quadratic;
+};  
+
+uniform int uPointLightCount;
+uniform PointLight uPointLights[MAX_LIGHT_COUNT];
+
+vec3 calculatePointLight(PointLight light, vec3 normal, vec3 vertPos);
+
+void main() {
+	vec3 norm = normalize(vertNormal);
 
 	// Diffuse
 	// ======= 
-	// Calculate normals
-	vec3 norm = normalize(vertNormal);
-	vec3 lightDir = normalize(lightPos - vertPos);
+	vec3 diffuse = vec3(0.0f);
 
-	// Calculate diffuse
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = diff * lightColor;
+	for (int i = 0; i < uPointLightCount; ++i) {
+		diffuse += calculatePointLight(uPointLights[i], norm, vertPos);
+	}
+
 
 	// Ambient
 	// =======
 
-	vec3 ambient = ambientStrength * ambientColor;
-
 	// Combine them
 	// ============
-	vec3 result = (diffuse + ambient) * vec3(texture(ourTexture, vertTex));
+	vec3 result = diffuse * vec3(texture(ourTexture, vertTex));
 	fragColor = vec4(result, 1.0f);
+}
+
+vec3 calculatePointLight(PointLight light, vec3 normal, vec3 vertPos) {
+
+	vec3 lightDir = normalize(light.position - vertPos);
+	// Calculate diffuse
+	float diff = max(dot(normal, lightDir), 0.0f);
+	// Specular shading
+
+	float distance = length(light.position - vertPos);
+	float attenuation = 1.0f/(light.constant + light.linear*distance + light.quadratic*(distance*distance));
+
+	vec3 diffuse = diff * light.color;
+	vec3 ambient = light.color;  
+	diffuse *= attenuation;
+	ambient *= attenuation;
+
+	return (diffuse + ambient);
 }

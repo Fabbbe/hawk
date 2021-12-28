@@ -32,8 +32,3 @@ uniform mat4 projection;
 ```
 
 It would be a possibility to the the MVP calculation on the CPU.
-
-## Cool Shit To Do in The Future
-
-Another future step is to import things like light positions through 
-a 1D texture.

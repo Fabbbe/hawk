@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
 <SCENE bounds="res/models/apartment_floor_mesh.obj" >
 	<object transform="0.0,0.0,0.0" rotation="0" path="res/models/apartment.obj" />
-	<object transform="1.0,0.0,4.0" rotation="70" path="res/models/cabinet.obj" />
 	<object transform="-2.0,0.0,4.0" rotation="90" path="res/models/cabinet.obj" />
 	<object transform="-3.5,0.0,-2.8" rotation="180" path="res/models/matress.obj" />
-	<light type="point" position="0.0,1.4,0.0" color="1.0,0.8,0.8" />
-	<!-- Light does not work yet
+	<object transform="-2.0,0.0,-4.0" path="res/models/lantern.obj" />
+	<light position="0.0,1.8,0.0" color="1.0,0.8,0.8" constant="1.0" linear="0.3" quadratic="0.3" />
+	<light position="-2.0,0.3,-4.0" color="1.0,0.2,0.2" constant="1.0" linear="1.5" quadratic="1.5" />
+	<!-- 
 	<object transform="0.5,0.0,-2.8" rotation="180" path="res/models/matress.obj" />
 	<object transform="3.5,0.0,-2.8" rotation="180" path="res/models/matress.obj" />
 	-->
