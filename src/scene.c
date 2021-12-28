@@ -79,7 +79,12 @@ Scene* loadScene(const char* sceneFilePath) {
 	
 	uint32_t objectNum = 0;
 	uint32_t lightNum = 0;
-	for (xmlNode* curNode = scnRootElement; curNode; curNode = curNode->next) {
+	for (
+		xmlNode* curNode = scnRootElement; 
+		curNode; 
+		curNode = curNode->next
+		) 
+	{
 		if (curNode->type == XML_ELEMENT_NODE) {
 
 			if (curNode == scnRootElement) { 
@@ -151,7 +156,9 @@ Scene* loadScene(const char* sceneFilePath) {
 				}
 				++lightNum;
 			}
-		} if (curNode->children != NULL) { // If it has children 
+		} 
+		// This is all wrong
+		if (curNode->children != NULL) { // If it has children 
 			curNode = curNode->children;
 		}
 	}
@@ -211,11 +218,9 @@ void destroyScene(Scene* scn) {
  */
 void drawScene(uint32_t program, Scene* scn) {
 	
-	// Pass struct uniform4fv
-	
+	// All of these could be moved to an updateScene function
 	uniform1i(program, "uPointLightCount",  scn->lightCount);
 
-	// This could be tidied up a bit
 	uniform3f(program, "uPointLights[0].position", scn->lights[0].position);
 	uniform3f(program, "uPointLights[1].position", scn->lights[1].position);
 	uniform3f(program, "uPointLights[2].position", scn->lights[2].position);

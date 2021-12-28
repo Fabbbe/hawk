@@ -16,3 +16,4 @@ $(PROGRAM_NAME): src/main.c $(IN_FILES)
 
 clean:
 	rm -rf $(PROGRAM_NAME) $(IN_FILES)
+	rm -rf *.log

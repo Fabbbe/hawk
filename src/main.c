@@ -28,9 +28,10 @@
  *   + Minecraft time!
  *   + Player position differs from the camera position
  *
+ * Make the player -> ground relationship better
+ *
  * Better movement
  *
- * Make the player -> ground relationship better
  * Make lights a part of the scene file (1D Texture) 
  *
  * Raymarching to find what player is looking at
@@ -44,6 +45,10 @@
 
 #define INIT_WINDOW_HEIGHT 480
 #define INIT_WINDOW_WIDTH 640
+
+#define SCALE_FACTOR 4
+
+#define ERROR_LOG_FILE_PATH "./error.log"
 
 bool init();
 void kill();
@@ -61,11 +66,14 @@ int main(int argc, char* argv[]) {
 	uint32_t windowWidth = INIT_WINDOW_WIDTH;
 	uint32_t windowHeight = INIT_WINDOW_HEIGHT; 
 
+	// Allows stderr to write to file
+	freopen(ERROR_LOG_FILE_PATH, "w", stderr);
+
 	if (!init()) {
 		fprintf(stderr, "Failed to init!\n");
 		return -1;
 	}
-
+	
 	// INIT OPENGL
 	// ===========
 	
@@ -86,20 +94,22 @@ int main(int argc, char* argv[]) {
 	glDebugMessageCallback(debugCallback, NULL); 
 #endif
 
-
-
-	// OpenGL Vertecies
-	// ----------------
-	
 	// Needed for opengl to work
 	// This holds the configured vertex arrays in object.c
 	uint32_t vertexArrayID;
 	glGenVertexArrays(1, &vertexArrayID);
 	glBindVertexArray(vertexArrayID); 
 
+
+	// Framebuffer & Renderbuffer
+	// --------------------------
+	
+	// Abstract this shit to shader or some shit
+
+	Screen* screen = createScreen(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, SCALE_FACTOR);
+
 	// Shaders!
 	// --------
-	
 	// change to a struct!! :-)
 	// ex: program basicShader = createProgramVF(...);
 	uint32_t basicShader;
@@ -110,8 +120,9 @@ int main(int argc, char* argv[]) {
 
 	// Objects
 	// -------
-	
+	uint32_t startTime = SDL_GetTicks();
 	Scene* level = loadScene("res/scenes/level_01.scene"); // Next generation shit!
+	printf("Scene load time: %ums\n", SDL_GetTicks() - startTime);
 
 	// CGLM
 	// ----
@@ -149,9 +160,6 @@ int main(int argc, char* argv[]) {
 	// =======
 	
 	// player Positions
-	float playerX = 0.0f;
-	float playerY = 0.0f;
-	float playerZ = 0.0f;
 
 	bool wireframe = false;
 	bool fullscreen = false;
@@ -232,6 +240,9 @@ int main(int argc, char* argv[]) {
 								projection
 						);
 						uniformMatrix4fv(basicShader, "projection", projection);
+
+						updateScreen(screen, windowWidth, windowHeight, SCALE_FACTOR);
+
 						printf("Resized to %ux%u\n", windowWidth, windowHeight);
 						break;
 					default:
@@ -294,17 +305,25 @@ int main(int argc, char* argv[]) {
 		);
 		uniformMatrix4fv(basicShader, "view", view);
 
-		
+		uniform1ui(screen->program, "uTime", SDL_GetTicks());
 		// Clear the Viewport
 		// ==================
-		glViewport(0, 0, windowWidth, windowHeight);
+		bindScreen(screen);
+		glViewport(0, 0, windowWidth/SCALE_FACTOR, windowHeight/SCALE_FACTOR);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Draw the Triangles
-		// ==================
-		
+		glBindVertexArray(vertexArrayID); 
+		glEnable(GL_DEPTH_TEST);
 		drawScene(basicShader, level);
+
+		unbindScreen();
+		if (wireframe)
+			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		glViewport(0, 0, windowWidth, windowHeight);
+		drawScreen(screen);
+		if (wireframe)
+			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
 		// Show it on the Window
 		// =====================
@@ -313,6 +332,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	destroyScene(level);
+	//glDeleteFramebuffers(1, &frameBufferID);  
 
 	// KILL
 	// ====
@@ -334,8 +354,8 @@ bool init() {
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+	//SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 #ifndef NDEBUG
@@ -345,7 +365,7 @@ bool init() {
 	window = SDL_CreateWindow( "Hello Hawk!",
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN //| SDL_WINDOW_RESIZABLE
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 	);
 
 	if (window == NULL) {
@@ -365,6 +385,6 @@ void kill() {
 // I could expand this
 void debugCallback(GLenum source, GLenum type, GLuint id,
 		GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
-	fprintf(stdout, "OpenGL Debug Message: %s\n", message);
+	fprintf(stderr, "OpenGL Debug Message: %s\n", message);
 }
 // Thanks for reading
