@@ -34,7 +34,7 @@
  *
  * Make lights a part of the scene file (1D Texture) 
  *
- * Raymarching to find what player is looking at
+ * Rays to find what player is looking at
  *
  */
 
@@ -42,6 +42,7 @@
 #include "include/shader.h"
 #include "include/object.h"
 #include "include/scene.h"
+#include "include/player.h"
 
 #define INIT_WINDOW_HEIGHT 480
 #define INIT_WINDOW_WIDTH 640
@@ -104,8 +105,6 @@ int main(int argc, char* argv[]) {
 	// Framebuffer & Renderbuffer
 	// --------------------------
 	
-	// Abstract this shit to shader or some shit
-
 	Screen* screen = createScreen(INIT_WINDOW_WIDTH, INIT_WINDOW_HEIGHT, SCALE_FACTOR);
 
 	// Shaders!
@@ -120,24 +119,13 @@ int main(int argc, char* argv[]) {
 
 	// Objects
 	// -------
-	uint32_t startTime = SDL_GetTicks();
 	Scene* level = loadScene("res/scenes/level_01.scene"); // Next generation shit!
-	printf("Scene load time: %ums\n", SDL_GetTicks() - startTime);
 
 	// CGLM
 	// ----
 	mat4 view = GLM_MAT4_IDENTITY_INIT;
 	mat4 projection = GLM_MAT4_IDENTITY_INIT;
 
-	vec3 cameraPos = {0.0f, 1.6f, 0.0f}; // 1.6 is eye level
-	vec3 cameraUp = {0.0f, 1.0f, 0.0f};
-	vec3 cameraDir = {0.0f, 0.0f, 0.0f};
-
-	float pitch, yaw; // roll could be added at some point
-	pitch = 0.0f;
-	yaw = 0.0f;
-	//roll = 0.0f;
-	
 	// Perspective
 	glm_perspective(GLM_PI/2.3f, 
 			(float)windowWidth / (float)windowHeight,
@@ -146,15 +134,9 @@ int main(int argc, char* argv[]) {
 			projection
 	);
 
-	// View
-	glm_look(cameraPos,
-			cameraDir,
-			cameraUp,
-			view
-	);
-
-	uniformMatrix4fv(basicShader, "view", view);
 	uniformMatrix4fv(basicShader, "projection", projection);
+	
+	Player* mainPlayer = createPlayer();
 
 	// Process
 	// =======
@@ -163,7 +145,6 @@ int main(int argc, char* argv[]) {
 
 	bool wireframe = false;
 	bool fullscreen = false;
-	float moveSpeed = 0.04f;
 	
 	bool running = true;
 	while (running) {
@@ -178,12 +159,7 @@ int main(int argc, char* argv[]) {
 			}
 			// Handle mousemotion
 			if (event.type == SDL_MOUSEMOTION) {
-				yaw -= 0.0015f * (float)event.motion.xrel; // too large or small values will make it innacurate
-				pitch -= 0.0015f * (float)event.motion.yrel; 
-				if (pitch > GLM_PI / 2.1f) // Caps so you cant look too far up/down
-					pitch = GLM_PI / 2.1f;
-				else if (pitch < -GLM_PI / 2.1f)
-					pitch = -GLM_PI / 2.1f;
+				rotatePlayer(mainPlayer, (float)event.motion.xrel, (float)event.motion.yrel);
 			}
 
 			// Handle keypresses
@@ -203,11 +179,11 @@ int main(int argc, char* argv[]) {
 						level = loadScene("res/scenes/level_01.scene");
 						break;
 					case SDLK_F11:
-						if (fullscreen) {
-							windowWidth = INIT_WINDOW_WIDTH;
-							windowHeight = INIT_WINDOW_HEIGHT;
-							SDL_SetWindowSize(window, windowWidth, windowHeight);
-							SDL_SetWindowFullscreen(window, true);
+						if (!fullscreen) {
+							SDL_DisplayMode dm;
+							SDL_GetDesktopDisplayMode(0, &dm);
+							SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+							SDL_SetWindowDisplayMode(window, &dm);
 						}
 						else
 							SDL_SetWindowFullscreen(window, false);
@@ -251,8 +227,8 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		float playerVelX = 0.0f;
-		float playerVelZ = 0.0f;
+		vec3 moveDir;
+		glm_vec3_zero(moveDir);
 		{	// Keyboard state reading and input
 			// This is a nice way of getting game-like input
 			const unsigned char* keyboardState = SDL_GetKeyboardState(NULL); 
@@ -261,48 +237,25 @@ int main(int argc, char* argv[]) {
 			// I see a lot of people write this by watching for presses/releases 
 			// of these buttons, but that looks like shit
 			if (keyboardState[SDL_SCANCODE_W]) {
-				playerVelZ += moveSpeed * cos(yaw);
-				playerVelX += moveSpeed * sin(yaw);
+				moveDir[2] = 1.0f;
 			}
 			if (keyboardState[SDL_SCANCODE_A]) {
-				playerVelZ -= moveSpeed * sin(yaw);
-				playerVelX += moveSpeed * cos(yaw);
+				moveDir[0] = 1.0f;
 			}
 			if (keyboardState[SDL_SCANCODE_S]) {
-				playerVelZ -= moveSpeed * cos(yaw);
-				playerVelX -= moveSpeed * sin(yaw);
+				moveDir[2] = -1.0f;
 			}
 			if (keyboardState[SDL_SCANCODE_D]) {
-				playerVelZ += moveSpeed * sin(yaw);
-				playerVelX -= moveSpeed * cos(yaw);
-			}
-			if (keyboardState[SDL_SCANCODE_LSHIFT]) {
-				playerVelZ *= 1.8f;
-				playerVelX *= 1.8f;
+				moveDir[0] = -1.0f;
 			}
 		}
-		
-		// This could be done a lot better
-		cameraPos[0] += playerVelX;
-		if (!pointIsOverMesh(cameraPos, level->bounds, NULL)) {
-			cameraPos[0] -= playerVelX * 1.02f; 
-		}
-		cameraPos[2] += playerVelZ;
-		if (!pointIsOverMesh(cameraPos, level->bounds, NULL)) {
-			cameraPos[2] -= playerVelZ * 1.02f;
-		}
+
+		glm_vec3_normalize(moveDir);
+		movePlayer(mainPlayer, level->bounds, moveDir, true);
 
 		// CAMERA MATH
 		// ===========
-		cameraDir[0] = sin(yaw) * cos(pitch); //x
-		cameraDir[1] = sin(pitch); //y
-		cameraDir[2] = cos(yaw) * cos(pitch); //z
-
-		glm_look(cameraPos,
-				cameraDir,
-				cameraUp,
-				view
-		);
+		getPlayerView(mainPlayer, view);
 		uniformMatrix4fv(basicShader, "view", view);
 
 		uniform1ui(screen->program, "uTime", SDL_GetTicks());
@@ -316,8 +269,8 @@ int main(int argc, char* argv[]) {
 		glBindVertexArray(vertexArrayID); 
 		glEnable(GL_DEPTH_TEST);
 		drawScene(basicShader, level);
-
 		unbindScreen();
+
 		if (wireframe)
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		glViewport(0, 0, windowWidth, windowHeight);
