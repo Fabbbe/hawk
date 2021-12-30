@@ -45,9 +45,9 @@ void rotatePlayer(Player* player, float yawDiff, float pitchDiff) {
 		player->pitch = -GLM_PI / 2.1f;
 }
 
-void movePlayer(Player* player, Mesh3D* bounds, vec3 moveDir, bool sprinting) {
+void movePlayer(Player* player, Mesh3D* bounds, vec3 moveDir, bool sprinting, double deltaTime) {
 	vec3 moveVec;
-	float moveSpeed = 0.04;
+	float moveSpeed = 0.0025 * deltaTime;
 
 	glm_vec3_rotate(moveDir, player->yaw, GLM_YUP);
 

@@ -19,6 +19,6 @@ void getPlayerView(Player* player, mat4 view);
 void rotatePlayer(Player* player, float pitchDiff, float yawDiff);
 
 //void movePlayer(Player* player, vec3 moveDir, bool sprinting);
-void movePlayer(Player* player, Mesh3D* bounds, vec3 moveDir, bool sprinting);
+void movePlayer(Player* player, Mesh3D* bounds, vec3 moveDir, bool sprinting, double deltaTime);
 
 #endif 

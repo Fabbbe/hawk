@@ -142,6 +142,9 @@ int main(int argc, char* argv[]) {
 	// =======
 	
 	// player Positions
+	
+	uint64_t lastTime = 0;
+	double deltaTime = 0;
 
 	bool wireframe = false;
 	bool fullscreen = false;
@@ -149,7 +152,15 @@ int main(int argc, char* argv[]) {
 	bool running = true;
 	while (running) {
 
-		// EVENT HANDLING
+		// Time handling
+		{
+			uint64_t curTime = SDL_GetPerformanceCounter();
+			deltaTime = (double)((curTime - lastTime)*1000 / (double)SDL_GetPerformanceFrequency());
+			lastTime = curTime;
+			//printf("%lf\n", deltaTime);
+		}
+
+		// Event handling
 		// ==============
 		
 		SDL_Event event;
@@ -251,7 +262,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		glm_vec3_normalize(moveDir);
-		movePlayer(mainPlayer, level->bounds, moveDir, true);
+		movePlayer(mainPlayer, level->bounds, moveDir, true, deltaTime);
 
 		// CAMERA MATH
 		// ===========

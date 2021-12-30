@@ -1,7 +1,7 @@
 #version 330 core
 
 #define COLOR_AMOUNT 17.0
-#define COLOR_SPREAD 0.017
+#define COLOR_SPREAD 0.007
 
 out vec4 FragColor;
 
@@ -30,6 +30,7 @@ void main() {
 	vec3 expBrightness = pow(vec3(170.0), vec3(texture(screenTexture, TexCoords)) - 1.0);
 	result += expBrightness * 0.6*random( vec2(texture(screenTexture, TexCoords)) + float(uTime)*0.0001);
 
+	// Scan lines
 	result += 0.01 * (1.0+sin(160.0*TexCoords.y+float(uTime)*0.03))/2.0;
 
 	FragColor = vec4(result, 1.0f);
