@@ -1,6 +1,6 @@
 # HAWK v0.0.1
 
-A small OpenGL program written while I was bored in programming class.
+A small OpenGL program written while I was bored in programming class. It has been cleaned up and documented, I most likley won't be working on this in the future.
 
 ## Dependencies
 
@@ -11,7 +11,7 @@ A small OpenGL program written while I was bored in programming class.
 
 + fast\_obj is distributed inside of this project and is created by 
   [Richard Knight](https://github.com/thisistherk/) under the 
-  Public Domain. 
+  MIT License. 
 
 + stb\_image.h is also distributed with this project. stb header 
   files are created by [Sean Barrett](https://github.com/nothings) 
@@ -30,5 +30,3 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection; 
 ```
-
-It would be a possibility to the the MVP calculation on the CPU.
