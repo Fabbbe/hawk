@@ -25,9 +25,6 @@ const char* findAttr(xmlNode* aNode, const char* attrName) {
  * their transformations.
  *
  * The XML specifications can be read at doc/scene.md.
- *
- * TODO:
- *   + Read lights from the XML and add to a scene.
  */
 Scene* loadScene(const char* sceneFilePath) {
 	xmlDoc* scnFile;
@@ -51,8 +48,7 @@ Scene* loadScene(const char* sceneFilePath) {
 
 	scnRootElement = xmlDocGetRootElement(scnFile);
 
-	// Find bounds
-
+	// Count all elements
 	for (xmlNode* curNode = scnRootElement; curNode; curNode = curNode->next) {
 		if (curNode->type == XML_ELEMENT_NODE) {
 			//printf("node type: Element, name: %s\n", curNode->name);
@@ -70,7 +66,7 @@ Scene* loadScene(const char* sceneFilePath) {
 	}
 	//printf("Light count: %u\n", scn->lightCount);
 
-	// calloc is probably better here since it gives initial values
+	// calloc is probably better here since it initializes memory
 	scn->objects = calloc(scn->objectCount, sizeof(struct SceneObject));
 
 	if (scn->lightCount > MAX_LIGHT_COUNT) 
@@ -83,7 +79,7 @@ Scene* loadScene(const char* sceneFilePath) {
 		xmlNode* curNode = scnRootElement; 
 		curNode; 
 		curNode = curNode->next
-		) 
+	) 
 	{
 		if (curNode->type == XML_ELEMENT_NODE) {
 
@@ -96,6 +92,7 @@ Scene* loadScene(const char* sceneFilePath) {
 				if (curNode->properties == NULL)
 					fprintf(stderr, "Invalid object, no properties\n");
 				else { // sscanf returns EOF if it cant fill variables
+
 					sscanf(
 							findAttr(curNode, "transform"), 
 							"%f,%f,%f", 
@@ -109,6 +106,16 @@ Scene* loadScene(const char* sceneFilePath) {
 							&scn->objects[objectNum].rot
 					);
 					strcpy(scn->objects[objectNum].modelPath, findAttr(curNode, "path"));
+
+					// Find if events are present
+					if (strcmp(findAttr(curNode, "event"), "\0") != 0) 
+						sscanf(findAttr(curNode, "event"),
+								"%hhu,%256s", // hhu is unsigned char
+								&scn->objects[objectNum].objectEvent->type, 
+								scn->objects[objectNum].objectEvent->data
+						);
+					else
+						scn->objects[objectNum].objectEvent = NULL;
 					//scn->objects[objectNum];
 				}
 				++objectNum;
@@ -151,16 +158,14 @@ Scene* loadScene(const char* sceneFilePath) {
 							"%f", 
 							&scn->lights[lightNum].quadratic
 					);
-					
-
 				}
 				++lightNum;
 			}
 		} 
-		// This is all wrong
+		// This is all wrong Does not go back to parents
 		if (curNode->children != NULL) { // If it has children 
 			curNode = curNode->children;
-		}
+		} 
 	}
 
 	if (scn->boundsPath != NULL) {

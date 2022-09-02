@@ -20,15 +20,14 @@
  * Checks wether point is over the mesh and returns bool. the distance value 
  * is also changed if true;
  */
-bool pointIsOverMesh(vec3 point, Mesh3D* mesh, float* distance) {
-	bool isOver = false;
+bool meshRayIntersect(Mesh3D* mesh, vec3 point, vec3 dir, float* distance) {
+	bool intersect = false;
 	for (int i=0; i < mesh->vertexCount/3 ; ++i) {
 		// Triangle vertices
+
 		vec3 v0;
 		vec3 v1;
 		vec3 v2;
-
-		vec3 down = {0.0f, -1.0f, 0.0f};
 
 		v0[0] = mesh->vertices[i*3].v0;
 		v0[1] = mesh->vertices[i*3].v1;
@@ -42,12 +41,17 @@ bool pointIsOverMesh(vec3 point, Mesh3D* mesh, float* distance) {
 		v2[1] = mesh->vertices[i*3+2].v1;
 		v2[2] = mesh->vertices[i*3+2].v2;
 
-		if (glm_ray_triangle(point, down, v0, v1, v2, distance)){
-			isOver = true;
-			//break;
+		if (glm_ray_triangle(point, dir, v0, v1, v2, distance)){
+			intersect = true;
+			break; // This should be looking for what the closest distance is
 		}
 	}
-	return isOver;
+	return intersect;
+}
+
+bool meshPointIsOver(Mesh3D* mesh, vec3 point, float* distance) {
+	vec3 down = {0.0f, -1.0f, 0.0f};
+	return meshRayIntersect(mesh, point, down, distance);
 }
 
 /**
@@ -208,6 +212,13 @@ void freeObject(Object3D* obj) {
 	free(obj->vertices);
 	free(obj);
 }
+
+/**
+ * freeMesh:
+ * @mesh: the object to free
+ *
+ * frees a mesh, same as freeObject
+ */
 void freeMesh(Mesh3D* mesh) {
 	free(mesh->vertices);
 	free(mesh);

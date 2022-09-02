@@ -28,6 +28,8 @@ specified here.
       "x,y,z".
     - *rotation*: The rotation of the object.
     - *path*: Path to a .obj file. 
+    - *event*: A number corresponding to the event type followed by a string 
+      of data (e.g. a path). "1,res/scenes/corridor.scn"
 
 + **light**
     - *position*: The light position in 3D space with three floats

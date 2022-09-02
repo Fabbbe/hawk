@@ -17,8 +17,20 @@
 
 #define PATH_LENGTH 256
 
+#define INTERACT_SCENE_LOAD 0b00000001
+#define INTERACT_DIALOG     0b00000010
+#define INTERACT_AUDIO      0b00000100
+
 // Max number of lights in a scene
 #define MAX_LIGHT_COUNT 4
+
+typedef struct {
+	// Event types:
+	// 1: scene load. loads the scene from path in data.
+
+	unsigned char type;
+	char data[256];
+} SceneEvent;
 
 struct SceneObject {
 	// translations of object
@@ -30,6 +42,7 @@ struct SceneObject {
 	char modelPath[PATH_LENGTH];
 
 	Object3D* obj;
+	SceneEvent* objectEvent;
 };
 
 struct SceneLight {
@@ -48,9 +61,13 @@ typedef struct { // This is the main struct
 	uint32_t lightCount;
 	struct SceneLight* lights;
 
-	// navMesh might be a slight misnomer
+	// Used to check if player inside level
 	char boundsPath[PATH_LENGTH];
 	Mesh3D* bounds;
+	
+	// Interactive meshes in level
+	uint32_t interactCount;
+	struct SceneInteract* interacts;
 } Scene;
 
 Scene* loadScene(const char* sceneFilePath);

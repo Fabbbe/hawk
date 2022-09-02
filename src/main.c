@@ -7,34 +7,15 @@
  * Some 3D graphics because I am bored in programming class
  * Python programming in uni is not fun ;-)
  *
- * I like the idea of rendering to a framebuffer and then 
- * using it as a texture so I can do some funky pixels
- *
- * A Quick Note on GCC
- * -------------------
- *
- * GCC lets the writer of a program programmatically allocate
- * the size of an arry:
- * 
- * int itemCount = 5;
- * char* items[itemCount * 3]; 
- *
- * Although this is c99 it might not work on all compilers and might be a bit 
- * funky when used. malloc is safer, but don't forget to free!
- *
- * TODO (ordered after priority):
- *
- * view bobbing:
- *   + Minecraft time!
- *   + Player position differs from the camera position
+ * TODO:
  *
  * Make the player -> ground relationship better
  *
- * Better movement
- *
- * Make lights a part of the scene file (1D Texture) 
+ * Find a non-hacky way to get dithering (In shader) (VERY HARD)
  *
  * Rays to find what player is looking at
+ *
+ * Better movement
  *
  */
 
@@ -44,10 +25,10 @@
 #include "include/scene.h"
 #include "include/player.h"
 
-#define INIT_WINDOW_HEIGHT 480
-#define INIT_WINDOW_WIDTH 640
+#define INIT_WINDOW_HEIGHT 720
+#define INIT_WINDOW_WIDTH 1280
 
-#define SCALE_FACTOR 2
+#define SCALE_FACTOR 1
 
 #define ERROR_LOG_FILE_PATH "./error.log"
 
@@ -141,8 +122,6 @@ int main(int argc, char* argv[]) {
 	// Process
 	// =======
 	
-	// player Positions
-	
 	uint64_t lastTime = 0;
 	double deltaTime = 0;
 
@@ -177,8 +156,7 @@ int main(int argc, char* argv[]) {
 			else if (event.type == SDL_KEYDOWN) {
 				switch (event.key.keysym.sym) { // Run through all the keys
 					case SDLK_ESCAPE:
-						running = false;
-						break;
+						//running = false;
 					case SDLK_F4:
 						if (SDL_GetRelativeMouseMode())
 							SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -262,7 +240,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		glm_vec3_normalize(moveDir);
-		movePlayer(mainPlayer, level->bounds, moveDir, true, deltaTime);
+		movePlayer(mainPlayer, level->bounds, moveDir, true, deltaTime); // Not well written
 
 		// CAMERA MATH
 		// ===========
@@ -270,6 +248,8 @@ int main(int argc, char* argv[]) {
 		uniformMatrix4fv(basicShader, "view", view);
 
 		uniform1ui(screen->program, "uTime", SDL_GetTicks());
+		uniform1ui(basicShader, "uTime", SDL_GetTicks());
+
 		// Clear the Viewport
 		// ==================
 		bindScreen(screen);
@@ -351,4 +331,3 @@ void debugCallback(GLenum source, GLenum type, GLuint id,
 		GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
 	fprintf(stderr, "OpenGL Debug Message: %s\n", message);
 }
-// Thanks for reading

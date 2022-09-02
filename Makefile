@@ -9,10 +9,10 @@ PKG_CONFIG=$(shell pkg-config --cflags --libs libxml-2.0 sdl2 gl glew cglm)
 CFLAGS=-Wall -I./src -lm -O2 -g3 $(PKG_CONFIG) #-DNDEBUG
 
 $(PROGRAM_NAME): src/main.c $(IN_FILES)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(CFLAGS)
 
 %.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) -c -o $@ $^ $(CFLAGS)
 
 clean:
 	rm -rf $(PROGRAM_NAME) $(IN_FILES)

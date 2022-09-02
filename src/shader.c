@@ -4,6 +4,12 @@
  */
 #include "include/shader.h"
 
+/** 
+ * readShaderSource:
+ * @sourcePath: path of source file to read
+ *
+ * returns a pointer to a shader source. Pointer should be freed.
+ */
 char* readShaderSource(const char* sourcePath) {
 	/* Reads and returns the file content, don't forget to free */
 	char* shaderSource;
@@ -27,12 +33,15 @@ char* readShaderSource(const char* sourcePath) {
 	return shaderSource;
 }
 
+/** 
+ * compileShader:
+ * @shaderSourcePath: path of source file to read and compile
+ * @shaderType: a OpenGL ID for the shader type
+ *
+ * Reads and compiles a shader and returns an ID representing the shader 
+ * inside OpenGL
+ */
 uint32_t compileShader(const char* shaderSourcePath, uint32_t shaderType) {
-	/* Compiles a shader from a given path to the shaders source code.
-	 * shaderType is the type of the shader specified as a GLenum
-	 *
-	 * TODO: Error checking and abstraction
-	 */
 	uint32_t shader;
 	char* shaderSource;
 
@@ -56,13 +65,15 @@ uint32_t compileShader(const char* shaderSourcePath, uint32_t shaderType) {
 	return shader;
 }
 
+
+/** 
+ * createProgramVF:
+ * @vertexSourcePath: path for the vertex shader
+ * @fragmentSourcePath: path for the fragment shader
+ *
+ * Creates and returns the id of a OpenGL program.
+ */
 uint32_t createProgramVF(const char* vertexSourcePath, const char* fragmentSourcePath) {
-	/* Creates and returns the id of a OpenGL program.
-	 *
-	 * Takes the path to a vertex and fragment shader and returns an ID for 
-	 * an OpenGL program.
-	 *
-	 */
 	uint32_t programVF;
 	uint32_t vertexShader;
 	uint32_t fragmentShader;
@@ -115,13 +126,15 @@ Screen* createScreen(uint32_t windowWidth, uint32_t windowHeight, uint32_t scale
 	glGenTextures(1, &scr->frameBufferTexID);
 	glBindTexture(GL_TEXTURE_2D, scr->frameBufferTexID);
 	glTexImage2D(GL_TEXTURE_2D, 
-			0, GL_R3_G3_B2,
+			0, GL_RGB,
 			screenWidth, screenHeight,
 			0, GL_RGB,
 			GL_UNSIGNED_BYTE, NULL
 	);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	// Renderbuffer
@@ -169,6 +182,12 @@ Screen* createScreen(uint32_t windowWidth, uint32_t windowHeight, uint32_t scale
 	return scr;
 }
 
+/**
+ * drawScreen:
+ * @scr: the screen struct to draw
+ *
+ * draws the current framebuffer to the screen
+ */
 void drawScreen(Screen* scr) {
 	glDisable(GL_DEPTH_TEST);
 	glUseProgram(scr->program);
@@ -223,7 +242,7 @@ void updateScreen(Screen* scr, uint32_t windowWidth, uint32_t windowHeight, uint
 
 	glBindTexture(GL_TEXTURE_2D, scr->frameBufferTexID);
 	glTexImage2D(GL_TEXTURE_2D, 
-			0, GL_R3_G3_B2,
+			0, GL_RGB,
 			screenWidth, screenHeight,
 			0, GL_RGB,
 			GL_UNSIGNED_BYTE, NULL

@@ -50,7 +50,8 @@ typedef struct {
 	struct MeshVertex* vertices;
 } Mesh3D;
 
-bool pointIsOverMesh(vec3 point, Mesh3D* mesh, float* distance);
+bool meshRayIntersect(Mesh3D* mesh, vec3 point, vec3 dir, float* distance);
+bool meshPointIsOver(Mesh3D* mesh, vec3 point, float* distance);
 
 Mesh3D* readMesh(const char* meshFilePath);
 

@@ -21,7 +21,7 @@ Player* createPlayer() {
  * @player: player to get view from
  * @view: Matrix output
  *
- * generates and outputs view matrix
+ * generates and outputs view matrix from specified player
  */
 void getPlayerView(Player* player, mat4 view) {
 	vec3 cameraDir;
@@ -36,6 +36,14 @@ void getPlayerView(Player* player, mat4 view) {
 	);
 }
 
+/**
+ * rotatePlayer:
+ * @player: player to get view from
+ * @yawDiff: yaw difference in radians
+ * @pitchDiff: pitch difference in radians
+ *
+ * rotates the specified player.
+ */
 void rotatePlayer(Player* player, float yawDiff, float pitchDiff) {
 	player->yaw -= yawDiff     *0.0015;
 	player->pitch -= pitchDiff *0.0015;
@@ -45,6 +53,18 @@ void rotatePlayer(Player* player, float yawDiff, float pitchDiff) {
 		player->pitch = -GLM_PI / 2.1f;
 }
 
+/**
+ * movePlayer:
+ * @player: player to get view from
+ * @bounds: The map bounds to keep the player inside of
+ * @moveDir: Normalized direction to move the player in
+ * @sprinting: sprinting as a bool
+ * @deltaTime: for consistent movement regardless of framerate
+ *
+ * Moves the player
+ *
+ * TODO: Program should pass only the moveVec, remove sprinting and deltaTime
+ */
 void movePlayer(Player* player, Mesh3D* bounds, vec3 moveDir, bool sprinting, double deltaTime) {
 	vec3 moveVec;
 	float moveSpeed = 0.0025 * deltaTime;
@@ -55,11 +75,11 @@ void movePlayer(Player* player, Mesh3D* bounds, vec3 moveDir, bool sprinting, do
 	//glm_vec3_add(moveVec, player->playerPos, player->playerPos);
 	// This could be done a lot better
 	player->playerPos[0] += moveVec[0];
-	if (!pointIsOverMesh(player->playerPos, bounds, NULL)) {
+	if (!meshPointIsOver(bounds, player->playerPos, NULL)) {
 		player->playerPos[0] -= moveVec[0] * 1.02f; 
 	}
 	player->playerPos[2] += moveVec[2];
-	if (!pointIsOverMesh(player->playerPos, bounds, NULL)) {
+	if (!meshPointIsOver(bounds, player->playerPos, NULL)) {
 		player->playerPos[2] -= moveVec[2] * 1.02f;
 	}
 	glm_vec3_copy(player->playerPos, player->cameraPos);

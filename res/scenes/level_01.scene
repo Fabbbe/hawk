@@ -9,8 +9,8 @@
 
 	<light 
 		position="0.0,1.8,0.0" 
-		color="0.8,0.9,1.0" 
-		constant="1.0" linear="0.3" quadratic="0.5" 
+		color="1.0,0.7,0.7" 
+		constant="1.0" linear="0.5" quadratic="0.3" 
 	/>
 
 	<light 

@@ -17,7 +17,8 @@ uniform uint uTime;
 float random(vec2 co);
 
 void main() {
-	gl_Position = (projection * view * model * vec4(aPos, 1.0));
+	gl_Position = (projection * view * model * vec4(aPos, 1.0)) * 
+		(0.01*random(vec2(uTime+aPos.x+aPos.y+aPos.z, uTime))+1.0);
 
 	// Multiplying with the model matrix correctly aligns everything with the light
 	// Have to learn linear algebra at some point. I don't really 
